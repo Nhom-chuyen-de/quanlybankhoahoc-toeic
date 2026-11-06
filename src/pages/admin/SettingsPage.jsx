@@ -1,5 +1,5 @@
 // src/pages/admin/SettingsPage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User, KeyRound, Palette, Camera, Save, Lock,
   Check, Sun, Moon, Monitor
@@ -10,12 +10,7 @@ import Input from '../../components/ui/Input';
 import Tabs from '../../components/ui/Tabs';
 import Badge from '../../components/ui/Badge';
 import { useToastContext } from '../../contexts/ToastContext';
-
-// TODO: nối API
-// - GET /api/admin/profile (Lấy hồ sơ quản trị)
-// - PUT /api/admin/profile (Cập nhật hồ sơ)
-// - PUT /api/admin/profile/change-password (Đổi mật khẩu)
-// - PUT /api/admin/profile/preferences (Lưu cài đặt giao diện)
+import { profileService } from '../../services/adminService';
 
 export default function SettingsPage() {
   const toast = useToastContext();
@@ -27,10 +22,11 @@ export default function SettingsPage() {
   };
 
   // Tab 1: Profile State
-  const [name, setName] = useState('Bùi Văn Nam');
-  const [email, setEmail] = useState('admin@toeic.vn');
-  const [phone, setPhone] = useState('0988 888 999');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [avatarUrl] = useState('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces');
+  useEffect(() => { profileService.get().then((profile) => { setName(profile.name || ''); setEmail(profile.email || ''); setPhone(profile.phone || ''); }).catch((error) => showToast(error.message || 'Không tải được hồ sơ.', 'error')); }, []);
 
   // Tab 2: Password State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -72,20 +68,21 @@ export default function SettingsPage() {
   };
 
   // Submit Profile Form
-  const handleProfileSubmit = (e) => {
+  const handleProfileSubmit = async (e) => {
     e.preventDefault();
-    showToast('Đã lưu thông tin hồ sơ cá nhân thành công!');
+    try { const profile = await profileService.update({ name, phone }); setName(profile.name); setPhone(profile.phone || ''); showToast('Đã lưu thông tin hồ sơ cá nhân.'); }
+    catch (error) { showToast(error.message || 'Không lưu được hồ sơ.', 'error'); }
   };
 
   // Submit Password Form
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (!currentPassword) {
       showToast('Vui lòng nhập mật khẩu hiện tại', 'error');
       return;
     }
-    if (newPassword.length < 6) {
-      showToast('Mật khẩu mới phải có ít nhất 6 ký tự', 'error');
+    if (newPassword.length < 10) {
+      showToast('Mật khẩu mới phải có ít nhất 10 ký tự', 'error');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -93,10 +90,11 @@ export default function SettingsPage() {
       return;
     }
 
-    showToast('Đã thay đổi mật khẩu quản trị thành công!');
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    try {
+      await profileService.changePassword({ currentPassword, newPassword });
+      showToast('Đã thay đổi mật khẩu quản trị thành công!');
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+    } catch (error) { showToast(error.message || 'Không đổi được mật khẩu.', 'error'); }
   };
 
   const tabs = [
@@ -154,8 +152,8 @@ export default function SettingsPage() {
                 <Input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+                  readOnly
+                  disabled
                 />
               </div>
 

@@ -1,5 +1,5 @@
 // src/pages/admin/DashboardPage.jsx
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Users, BookOpen, TrendingUp, HelpCircle,
   ArrowUpRight, Check, X, Clock, AlertTriangle,
@@ -16,15 +16,7 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { useToastContext } from '../../contexts/ToastContext';
-import {
-  mockDashboardStats,
-  mockRevenue12Months,
-  mockEnrollments12Months,
-  mockRoleDistribution,
-  mockRecentOrders,
-  mockPendingReviews,
-  mockHighPriorityTickets,
-} from '../../mock/dashboard';
+import { dashboardService, reviewService } from '../../services/adminService';
 
 // TODO: nối API - Thay thế toàn bộ mock data bằng API endpoints:
 // - GET /api/admin/dashboard/stats
@@ -92,18 +84,46 @@ const EnrollmentTooltip = ({ active, payload, label }) => {
 
 export default function DashboardPage() {
   const toast = useToastContext();
-  const [reviews, setReviews] = useState(mockPendingReviews);
+  const [stats, setStats] = useState([]);
+  const [revenue, setRevenue] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [urgentTickets, setUrgentTickets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleApproveReview = (id, title) => {
-    // TODO: nối API - POST /api/admin/reviews/:id/approve
+  const loadDashboard = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [statData, revenueData, enrollmentData, roleData, orderData, reviewData, ticketData] = await Promise.all([
+        dashboardService.getStats(), dashboardService.getRevenueChart(), dashboardService.getEnrollmentChart(),
+        dashboardService.getRoleDistribution(), dashboardService.getRecentOrders(),
+        dashboardService.getPendingReviews(), dashboardService.getUrgentTickets(),
+      ]);
+      setStats(statData); setRevenue(revenueData); setEnrollments(enrollmentData); setRoles(roleData);
+      setRecentOrders(orderData); setReviews(reviewData); setUrgentTickets(ticketData);
+    } catch (error) {
+      toast.error(error.message || 'Không tải được dữ liệu dashboard.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+
+  const handleApproveReview = async (id, title) => {
+    try { await reviewService.approveContent(id);
     setReviews((prev) => prev.filter((r) => r.id !== id));
     toast.success(`Đã phê duyệt "${title}"`);
+    } catch (error) { toast.error(error.message); }
   };
 
-  const handleRejectReview = (id, title) => {
-    // TODO: nối API - POST /api/admin/reviews/:id/reject
+  const handleRejectReview = async (id, title) => {
+    try { await reviewService.rejectContent(id, 'Từ chối từ Dashboard');
     setReviews((prev) => prev.filter((r) => r.id !== id));
     toast.info(`Đã từ chối "${title}"`);
+    } catch (error) { toast.error(error.message); }
   };
 
   return (
@@ -116,8 +136,8 @@ export default function DashboardPage() {
             <span className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-lg shadow-sm">
               Cập nhật lúc: <strong>{new Date().toLocaleDateString('vi-VN')}</strong>
             </span>
-            <Button size="sm" variant="secondary" onClick={() => toast.success('Dữ liệu đã được làm mới')}>
-              Làm mới
+            <Button size="sm" variant="secondary" onClick={loadDashboard} disabled={isLoading}>
+              {isLoading ? 'Đang tải…' : 'Làm mới'}
             </Button>
           </div>
         }
@@ -125,7 +145,7 @@ export default function DashboardPage() {
 
       {/* ─── 1. 4 STAT CARDS ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {mockDashboardStats.map((stat) => {
+        {stats.map((stat) => {
           const Icon = statIcons[stat.icon] || TrendingUp;
           return (
             <StatCard
@@ -160,7 +180,7 @@ export default function DashboardPage() {
           <div className="p-5">
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockRevenue12Months} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <LineChart data={revenue} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis
                     dataKey="month"
@@ -208,7 +228,7 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={mockRoleDistribution}
+                    data={roles}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -217,7 +237,7 @@ export default function DashboardPage() {
                     outerRadius={85}
                     paddingAngle={3}
                   >
-                    {mockRoleDistribution.map((entry) => (
+                    {roles.map((entry) => (
                       <Cell key={entry.name} fill={entry.color} />
                     ))}
                   </Pie>
@@ -232,7 +252,7 @@ export default function DashboardPage() {
             </div>
             {/* Legend danh sách 3 vai trò */}
             <div className="w-full grid grid-cols-3 gap-2 mt-2 pt-3 border-t border-gray-100 dark:border-gray-700/60">
-              {mockRoleDistribution.map((role) => (
+              {roles.map((role) => (
                 <div key={role.name} className="flex items-center justify-between text-xs p-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/60">
                   <span className="flex items-center gap-1.5 truncate">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: role.color }} />
@@ -267,7 +287,7 @@ export default function DashboardPage() {
         <div className="p-5">
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockEnrollments12Months} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+              <BarChart data={enrollments} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis
                   dataKey="month"
@@ -309,7 +329,7 @@ export default function DashboardPage() {
             </button>
           </div>
           <div className="divide-y divide-gray-100 dark:divide-gray-700/60 flex-1">
-            {mockRecentOrders.slice(0, 5).map((order) => (
+            {recentOrders.slice(0, 5).map((order) => (
               <div key={order.id} className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-mono text-xs font-semibold text-gray-800 dark:text-gray-200">
@@ -398,7 +418,7 @@ export default function DashboardPage() {
             </button>
           </div>
           <div className="divide-y divide-gray-100 dark:divide-gray-700/60 flex-1">
-            {mockHighPriorityTickets.slice(0, 5).map((ticket) => (
+            {urgentTickets.slice(0, 5).map((ticket) => (
               <div key={ticket.id} className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-1.5">

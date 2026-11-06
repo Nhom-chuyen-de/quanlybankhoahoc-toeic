@@ -1,5 +1,5 @@
 // src/pages/admin/CoursesPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   BookOpen, Plus, LayoutGrid, List, Eye, Pencil, Trash2,
@@ -19,7 +19,7 @@ import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import EmptyState from '../../components/shared/EmptyState';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { useToastContext } from '../../contexts/ToastContext';
-import { mockCoursesList, mockCategories } from '../../mock/training';
+import { courseService, categoryService } from '../../services/adminService';
 import { COURSE_LEVEL, COURSE_FORMAT, MODERATION_STATUS } from '../../constants/enums';
 
 // TODO: nối API - Thay mockCoursesList bằng GET /api/admin/courses
@@ -130,7 +130,8 @@ function ModerationBadge({ status, size = 'xs' }) {
 export default function CoursesPage() {
   const navigate = useNavigate();
   const toast = useToastContext();
-  const [courses, setCourses] = useState(mockCoursesList);
+  const [courses, setCourses] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [viewMode, setViewMode] = useState('table');
 
   // Bộ lọc
@@ -169,10 +170,21 @@ export default function CoursesPage() {
   // Confirm Xóa
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, item: null });
 
+  const loadCourses = async () => {
+    try {
+      const [courseResult, categoryResult] = await Promise.all([
+        courseService.getCourses({ page: 1, limit: 100 }), categoryService.list({ page: 1, limit: 100 }),
+      ]);
+      setCourses(courseResult);
+      setCategories(categoryResult);
+    } catch (error) { toast.error(error.message || 'Không tải được danh sách khóa học.'); }
+  };
+  useEffect(() => { loadCourses(); }, []);
+
   const categoryOptions = useMemo(() => [
     { value: '', label: 'Chọn danh mục...' },
-    ...mockCategories.map((c) => ({ value: c.name, label: c.name })),
-  ], []);
+    ...categories.map((c) => ({ value: c.name, label: c.name })),
+  ], [categories]);
 
   const filtered = useMemo(() => {
     return courses.filter((c) => {
@@ -193,7 +205,7 @@ export default function CoursesPage() {
   const handleOpenCreate = () => {
     setFormData({
       ...defaultForm,
-      category: mockCategories[0]?.name || '',
+      category: categories[0]?.name || '',
     });
     setFormErrors({});
     setModalState({ isOpen: true, mode: 'create', item: null });
@@ -235,7 +247,7 @@ export default function CoursesPage() {
     return errors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault();
     const errors = validate();
     if (Object.keys(errors).length > 0) {
@@ -244,60 +256,23 @@ export default function CoursesPage() {
       return;
     }
 
-    if (modalState.mode === 'create') {
-      const newCourse = {
-        id: Math.random().toString(36).substring(2, 10),
-        title: formData.title,
-        category: formData.category || mockCategories[0]?.name,
-        categoryId: 'CAT01',
-        level: formData.level,
-        examType: formData.examType,
-        price: formData.price === '' ? 0 : Number(formData.price),
-        status: formData.status,
-        thumbnailUrl: formData.thumbnailUrl,
-        entryLevel: formData.entryLevel,
-        targetScore: formData.targetScore === '' ? null : Number(formData.targetScore),
-        format: formData.format,
-        durationHours: formData.durationHours === '' ? null : Number(formData.durationHours),
-        accessDays: formData.accessDays === '' ? null : Number(formData.accessDays),
-        isVisible: formData.isVisible,
-        moderationStatus: 'pending',
-        creator: 'Admin Nguyễn Văn An',
-        updatedAt: new Date().toLocaleDateString('vi-VN'),
-        createdAt: new Date().toLocaleDateString('vi-VN'),
-        description: formData.description,
-        targetOutput: '',
-        totalLessons: 0,
-        totalDuration: '0 giờ',
-        enrolledCount: 0,
-        chapters: [],
-        classes: [],
-        students: [],
-      };
-      setCourses([newCourse, ...courses]);
-      toast.success(`Đã tạo khóa học "${newCourse.title}"`);
-    } else {
-      setCourses((prev) =>
-        prev.map((c) =>
-          c.id === modalState.item.id
-            ? {
-                ...c,
-                ...formData,
-                price: formData.price === '' ? 0 : Number(formData.price),
-                targetScore: formData.targetScore === '' ? null : Number(formData.targetScore),
-                durationHours: formData.durationHours === '' ? null : Number(formData.durationHours),
-                accessDays: formData.accessDays === '' ? null : Number(formData.accessDays),
-                updatedAt: new Date().toLocaleDateString('vi-VN'),
-              }
-            : c
-        )
-      );
-      toast.success(`Đã cập nhật khóa học "${formData.title}"`);
-    }
+    const category = categories.find((item) => item.name === formData.category);
+    if (!category) { toast.error('Hãy chọn danh mục đã có trong hệ thống.'); return; }
+    const payload = { ...formData, categoryId: category.id, price: formData.price === '' ? null : Number(formData.price), targetScore: formData.targetScore === '' ? null : Number(formData.targetScore), durationHours: formData.durationHours === '' ? null : Number(formData.durationHours), accessDays: formData.accessDays === '' ? null : Number(formData.accessDays) };
+    try {
+      if (modalState.mode === 'create') {
+        await courseService.createCourse(payload);
+        toast.success(`Đã tạo khóa học "${formData.title}"`);
+      } else {
+        await courseService.updateCourse(modalState.item.id, payload);
+        toast.success(`Đã cập nhật khóa học "${formData.title}"`);
+      }
+      await loadCourses();
+    } catch (error) { toast.error(error.message || 'Không lưu được khóa học.'); return; }
     setModalState({ isOpen: false, mode: 'create', item: null });
   };
 
-  const handleToggleVisibility = (id) => {
+  const handleToggleVisibility = async (id) => {
     const course = courses.find((c) => c.id === id);
     if (!course) return;
     const nextVal = course.isVisible === false ? true : false;
@@ -306,21 +281,17 @@ export default function CoursesPage() {
       toast.error('Cần nhập học phí trước khi bật Hiển thị');
       return;
     }
-    setCourses((prev) =>
-      prev.map((c) => {
-        if (c.id === id) {
-          toast.success(nextVal ? `Đã bật hiển thị cho "${c.title}"` : `Đã tắt hiển thị cho "${c.title}"`);
-          return { ...c, isVisible: nextVal };
-        }
-        return c;
-      })
-    );
+    try {
+      await courseService.updateCourseVisibility(id, nextVal);
+      toast.success(nextVal ? `Đã bật hiển thị cho "${course.title}"` : `Đã tắt hiển thị cho "${course.title}"`);
+      await loadCourses();
+    } catch (error) { toast.error(error.message || 'Không cập nhật được trạng thái hiển thị.'); }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     const item = deleteConfirm.item;
-    setCourses((prev) => prev.filter((c) => c.id !== item.id));
-    toast.success(`Đã xóa khóa học "${item.title}"`);
+    try { await courseService.deleteCourse(item.id); toast.success(`Đã lưu trữ khóa học "${item.title}"`); await loadCourses(); }
+    catch (error) { toast.error(error.message || 'Không lưu trữ được khóa học.'); }
     setDeleteConfirm({ isOpen: false, item: null });
   };
 
@@ -491,7 +462,7 @@ export default function CoursesPage() {
           className="w-full"
         />
         <Select
-          options={[{ value: '', label: 'Tất cả danh mục' }, ...mockCategories.map((c) => ({ value: c.name, label: c.name }))]}
+          options={[{ value: '', label: 'Tất cả danh mục' }, ...categories.map((c) => ({ value: c.name, label: c.name }))]}
           value={catFilter}
           onChange={(e) => setCatFilter(e.target.value)}
         />

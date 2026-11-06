@@ -1,5 +1,5 @@
 // src/pages/admin/CertificatesPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Award, Star, Plus, Eye, Download, ShieldCheck, Sparkles, AlertTriangle
 } from 'lucide-react';
@@ -14,12 +14,7 @@ import Tabs from '../../components/ui/Tabs';
 import Badge from '../../components/ui/Badge';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import { useToastContext } from '../../contexts/ToastContext';
-import {
-  mockCertificates,
-  mockReviews,
-  mockRatingStats,
-  mockCompletedEnrollments
-} from '../../mock/certificates';
+import { certificateService, certificateEnrollmentService, reviewService } from '../../services/adminService';
 
 // TODO: nối API
 // - GET /api/admin/certificates (Danh sách chứng chỉ)
@@ -44,7 +39,9 @@ export default function CertificatesPage() {
   };
 
   // Tab 1: Certificates State
-  const [certificates, setCertificates] = useState(mockCertificates);
+  const [certificates, setCertificates] = useState([]);
+  const [completedEnrollments, setCompletedEnrollments] = useState([]);
+  const [ratingStats, setRatingStats] = useState({ average: 0, total: 0, distribution: {} });
   const [certSearch, setCertSearch] = useState('');
   const [certStatusFilter, setCertStatusFilter] = useState('');
   const [selectedCert, setSelectedCert] = useState(null);
@@ -56,9 +53,24 @@ export default function CertificatesPage() {
   const [newCertExpiry, setNewCertExpiry] = useState('');
 
   // Tab 2: Reviews State
-  const [reviews, setReviews] = useState(mockReviews);
+  const [reviews, setReviews] = useState([]);
   const [reviewSearch, setReviewSearch] = useState('');
   const [starFilter, setStarFilter] = useState('');
+
+  const loadCertificateData = async () => {
+    try {
+      const [certResult, reviewResult, statsResult, enrollmentResult] = await Promise.all([
+        certificateService.list({ page: 1, limit: 100 }), reviewService.list({ page: 1, limit: 100 }),
+        reviewService.stats(), certificateEnrollmentService.list(),
+      ]);
+      const displayDate = (value) => value ? new Date(value).toLocaleDateString('vi-VN') : null;
+      setCertificates(certResult.map((item) => ({ ...item, issueDate: displayDate(item.issueDate), expiryDate: displayDate(item.expiryDate) })));
+      setReviews(reviewResult.map((item) => ({ ...item, date: displayDate(item.date), comment: item.comment || '' })));
+      setRatingStats(statsResult);
+      setCompletedEnrollments(enrollmentResult);
+    } catch (error) { showToast(error.message || 'Không tải được chứng chỉ và đánh giá.', 'error'); }
+  };
+  useEffect(() => { loadCertificateData(); }, []);
 
   // Filter Certificates
   const filteredCerts = useMemo(() => {
@@ -86,8 +98,10 @@ export default function CertificatesPage() {
   }, [reviews, reviewSearch, starFilter]);
 
   // Handle Revoke
-  const handleConfirmRevoke = () => {
+  const handleConfirmRevoke = async () => {
     if (!certToRevoke) return;
+    try { await certificateService.revoke(certToRevoke.id); }
+    catch (error) { showToast(error.message || 'Không thu hồi được chứng chỉ.', 'error'); return; }
     setCertificates((prev) =>
       prev.map((c) => (c.id === certToRevoke.id ? { ...c, status: 'revoked' } : c))
     );
@@ -96,15 +110,20 @@ export default function CertificatesPage() {
   };
 
   // Handle Issue Certificate
-  const handleIssueSubmit = (e) => {
+  const handleIssueSubmit = async (e) => {
     e.preventDefault();
     if (!selectedEnrollmentId) {
       showToast('Vui lòng chọn đăng ký khóa học đã hoàn thành', 'error');
       return;
     }
 
-    const enrollment = mockCompletedEnrollments.find((en) => en.id === selectedEnrollmentId) || mockCompletedEnrollments[0];
+    const enrollment = completedEnrollments.find((en) => en.id === selectedEnrollmentId);
+    if (!enrollment) { showToast('Ghi danh đã chọn không còn đủ điều kiện cấp chứng chỉ.', 'error'); return; }
     const generatedCertNum = `CERT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    try {
+      await certificateService.create({ enrollmentId: selectedEnrollmentId, certificateNumber: generatedCertNum, expiresAt: newCertExpiry || null });
+    } catch (error) { showToast(error.message || 'Không cấp được chứng chỉ.', 'error'); return; }
 
     const newCert = {
       id: `cert-${Date.now()}`,
@@ -124,6 +143,7 @@ export default function CertificatesPage() {
     };
 
     setCertificates([newCert, ...certificates]);
+    setCompletedEnrollments((items) => items.filter((item) => item.id !== selectedEnrollmentId));
     setIssueModalOpen(false);
     setSelectedEnrollmentId('');
     setNewCertExpiry('');
@@ -394,7 +414,7 @@ export default function CertificatesPage() {
                 Điểm đánh giá trung bình
               </h4>
               <div className="text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                {mockRatingStats.average}
+                {ratingStats.average}
                 <span className="text-xl font-normal text-gray-400">/5.0</span>
               </div>
               <div className="flex items-center justify-center gap-1 pt-1">
@@ -403,15 +423,15 @@ export default function CertificatesPage() {
                 ))}
               </div>
               <p className="text-xs text-gray-500">
-                Dựa trên <strong>{mockRatingStats.total}</strong> lượt đánh giá của học viên
+                Dựa trên <strong>{ratingStats.total}</strong> lượt đánh giá của học viên
               </p>
             </div>
 
             {/* Phân bố 1 - 5 sao */}
             <div className="md:col-span-8 space-y-2">
               {[5, 4, 3, 2, 1].map((rating) => {
-                const count = mockRatingStats.distribution[rating] || 0;
-                const percent = Math.round((count / mockRatingStats.total) * 100);
+                const count = ratingStats.distribution[rating] || 0;
+                const percent = ratingStats.total ? Math.round((count / ratingStats.total) * 100) : 0;
                 return (
                   <div key={rating} className="flex items-center gap-3 text-xs">
                     <span className="w-12 flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-300">
@@ -622,7 +642,7 @@ export default function CertificatesPage() {
               required
             >
               <option value="">-- Chọn học viên & khóa học hoàn thành --</option>
-              {mockCompletedEnrollments.map((enr) => (
+              {completedEnrollments.map((enr) => (
                 <option key={enr.id} value={enr.id}>
                   {enr.studentName} — {enr.courseName} (Đã hoàn thành)
                 </option>

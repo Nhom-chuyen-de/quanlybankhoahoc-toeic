@@ -1,5 +1,5 @@
 // src/pages/admin/PaymentsPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   CreditCard, CheckCircle2, Plus, Wallet
 } from 'lucide-react';
@@ -13,7 +13,7 @@ import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { useToastContext } from '../../contexts/ToastContext';
-import { mockPaymentsList, mockPaymentGateways } from '../../mock/business';
+import { paymentService } from '../../services/adminService';
 
 // TODO: nối API
 // - GET /api/admin/payments (Lấy danh sách giao dịch)
@@ -38,8 +38,16 @@ export default function PaymentsPage() {
   const toast = useToastContext();
 
   // Dữ liệu cổng thanh toán và giao dịch
-  const [gateways, setGateways] = useState(mockPaymentGateways);
-  const [payments, setPayments] = useState(mockPaymentsList);
+  const [gateways, setGateways] = useState([]);
+  const [payments, setPayments] = useState([]);
+
+  const loadPaymentData = async () => {
+    try {
+      const [gatewayResult, paymentResult] = await Promise.all([paymentService.gateways({ page: 1, limit: 100 }), paymentService.list({ page: 1, limit: 100 })]);
+      setGateways(gatewayResult); setPayments(paymentResult.map((item) => ({ ...item, gatewayTransId: item.gatewayTransId || '—' })));
+    } catch (error) { toast.error(error.message || 'Không tải được dữ liệu thanh toán.'); }
+  };
+  useEffect(() => { loadPaymentData(); }, []);
 
   // Bộ lọc
   const [search, setSearch] = useState('');
@@ -51,10 +59,8 @@ export default function PaymentsPage() {
   const [editingGateway, setEditingGateway] = useState(null);
   const [gatewayFormData, setGatewayFormData] = useState({
     name: '',
-    code: '',
     feePercent: 0,
     isActive: true,
-    description: '',
   });
 
   // Confirm dialog xác nhận thanh toán thủ công
@@ -80,16 +86,9 @@ export default function PaymentsPage() {
   }, [payments, search, gatewayFilter, statusFilter]);
 
   // Bật/tắt công tắc kích hoạt cổng thanh toán
-  const handleToggleGateway = (gwId, currentStatus) => {
-    // TODO: nối API - PATCH /api/admin/payment-gateways/:id/toggle
-    setGateways((prev) =>
-      prev.map((gw) =>
-        gw.id === gwId ? { ...gw, isActive: !currentStatus } : gw
-      )
-    );
-    toast.success(
-      `Đã ${!currentStatus ? 'kích hoạt' : 'tạm dừng'} cổng thanh toán thành công!`
-    );
+  const handleToggleGateway = async (gwId, currentStatus) => {
+    try { await paymentService.toggleGateway(gwId); toast.success(`Đã ${!currentStatus ? 'kích hoạt' : 'tạm dừng'} cổng thanh toán thành công!`); await loadPaymentData(); }
+    catch (error) { toast.error(error.message || 'Không đổi được trạng thái cổng thanh toán.'); }
   };
 
   // Mở modal thêm cổng mới
@@ -97,72 +96,37 @@ export default function PaymentsPage() {
     setEditingGateway(null);
     setGatewayFormData({
       name: '',
-      code: '',
       feePercent: 1.5,
       isActive: true,
-      description: '',
     });
     setIsGatewayModalOpen(true);
   };
 
   // Lưu cấu hình cổng thanh toán
-  const handleSaveGateway = (e) => {
+  const handleSaveGateway = async (e) => {
     e.preventDefault();
     if (!gatewayFormData.name.trim()) {
       toast.error('Vui lòng nhập tên cổng thanh toán');
       return;
     }
 
-    if (editingGateway) {
-      // TODO: nối API - PUT /api/admin/payment-gateways/:id
-      setGateways((prev) =>
-        prev.map((gw) =>
-          gw.id === editingGateway.id
-            ? { ...gw, ...gatewayFormData, feePercent: parseFloat(gatewayFormData.feePercent) || 0 }
-            : gw
-        )
-      );
-      toast.success(`Cập nhật cổng "${gatewayFormData.name}" thành công!`);
-    } else {
-      // TODO: nối API - POST /api/admin/payment-gateways
-      const newGateway = {
-        id: `GW_${Date.now()}`,
-        ...gatewayFormData,
-        feePercent: parseFloat(gatewayFormData.feePercent) || 0,
-        transactionCount: 0,
-      };
-      setGateways((prev) => [...prev, newGateway]);
-      toast.success(`Đã thêm cổng thanh toán "${gatewayFormData.name}"!`);
-    }
+    const payload = { name: gatewayFormData.name.trim(), feePercent: parseFloat(gatewayFormData.feePercent) || 0, isActive: gatewayFormData.isActive };
+    try {
+      if (editingGateway) { await paymentService.updateGateway(editingGateway.id, payload); toast.success(`Cập nhật cổng "${gatewayFormData.name}" thành công!`); }
+      else { await paymentService.createGateway(payload); toast.success(`Đã thêm cổng thanh toán "${gatewayFormData.name}"!`); }
+      await loadPaymentData();
+    } catch (error) { toast.error(error.message || 'Không lưu được cổng thanh toán.'); return; }
 
     setIsGatewayModalOpen(false);
   };
 
   // Xác nhận thủ công cho giao dịch chờ xử lý - Chỉ ghi nhận họ tên Admin
-  const handleConfirmManualPayment = () => {
+  const handleConfirmManualPayment = async () => {
     if (!confirmPayment) return;
     setConfirmLoading(true);
-
-    setTimeout(() => {
-      // TODO: nối API - POST /api/admin/payments/:id/manual-confirm
-      setPayments((prev) =>
-        prev.map((p) =>
-          p.id === confirmPayment.id
-            ? {
-                ...p,
-                status: 'success',
-                confirmedBy: 'Nguyễn Văn An',
-                gatewayTransId: p.gatewayTransId === '—' ? `MANUAL-${Date.now().toString().slice(-6)}` : p.gatewayTransId,
-              }
-            : p
-        )
-      );
-      setConfirmLoading(false);
-      setConfirmPayment(null);
-      toast.success(
-        `Xác nhận thành công giao dịch ${confirmPayment.id} (${formatVnd(confirmPayment.amount)})!`
-      );
-    }, 600);
+    try { await paymentService.confirm(confirmPayment.id); await loadPaymentData(); toast.success(`Xác nhận thành công giao dịch ${confirmPayment.id} (${formatVnd(confirmPayment.amount)})!`); }
+    catch (error) { toast.error(error.message || 'Không xác nhận được thanh toán.'); }
+    finally { setConfirmLoading(false); setConfirmPayment(null); }
   };
 
   // Cấu hình cột bảng giao dịch
@@ -471,25 +435,6 @@ export default function PaymentsPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Mã định danh (Code) <span className="text-red-500">*</span>
-              </label>
-              <Input
-                value={gatewayFormData.code}
-                onChange={(e) =>
-                  setGatewayFormData({
-                    ...gatewayFormData,
-                    code: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
-                  })
-                }
-                placeholder="VD: zalopay"
-                disabled={!!editingGateway}
-                required
-              />
-              <p className="text-[11px] text-gray-400 mt-1">Chữ thường viết liền, không dấu</p>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Phí giao dịch (%)

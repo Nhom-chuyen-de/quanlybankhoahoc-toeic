@@ -1,5 +1,5 @@
 // src/pages/admin/ClassesPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   School, Plus, Search, Filter, Eye, Pencil, Trash2,
@@ -17,7 +17,7 @@ import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import EmptyState from '../../components/shared/EmptyState';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { useToastContext } from '../../contexts/ToastContext';
-import { mockClassesList, mockCoursesList } from '../../mock/training';
+import { classService, courseService, teacherService } from '../../services/adminService';
 
 // TODO: nối API - Thay thế bằng các endpoint /api/admin/classes
 const statusOptions = [
@@ -31,7 +31,20 @@ const statusOptions = [
 export default function ClassesPage() {
   const navigate = useNavigate();
   const toast = useToastContext();
-  const [classes, setClasses] = useState(mockClassesList);
+  const [classes, setClasses] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+
+  const loadClasses = async () => {
+    try {
+      const [classResult, courseResult, teacherResult] = await Promise.all([
+        classService.list({ page: 1, limit: 100 }), courseService.getCourses({ page: 1, limit: 100 }), teacherService.list({ page: 1, limit: 100 }),
+      ]);
+      setClasses(classResult.map((item) => ({ ...item, startDate: String(item.startDate).slice(0, 10), endDate: String(item.endDate).slice(0, 10), teacher: item.teacherName, maxStudents: item.capacity, enrolled: item.studentsCount })));
+      setCourses(courseResult); setTeachers(teacherResult);
+    } catch (error) { toast.error(error.message || 'Không tải được danh sách lớp học.'); }
+  };
+  useEffect(() => { loadClasses(); }, []);
 
   // Bộ lọc
   const [search, setSearch] = useState('');
@@ -98,8 +111,8 @@ export default function ClassesPage() {
   const handleOpenCreate = () => {
     setFormData({
       name: '',
-      courseName: mockCoursesList[0]?.title || 'TOEIC 650+ Listening & Reading Cấp tốc',
-      teacher: 'ThS. Trần Thị Mai Phương',
+      courseName: courses[0]?.title || '',
+      teacher: teachers[0]?.name || '',
       maxStudents: 25,
       startDate: '2024-11-15',
       endDate: '2025-01-30',
@@ -121,7 +134,7 @@ export default function ClassesPage() {
     setModalState({ isOpen: true, mode: 'edit', item });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault();
     const errors = {};
     if (!formData.name.trim()) errors.name = 'Tên lớp học không được để trống';
@@ -135,47 +148,22 @@ export default function ClassesPage() {
       return;
     }
 
-    if (modalState.mode === 'create') {
-      const newClass = {
-        id: `CLS${String(classes.length + 1).padStart(2, '0')}`,
-        name: formData.name,
-        courseId: 'CRS001',
-        courseName: formData.courseName,
-        teacher: formData.teacher,
-        enrolled: 0,
-        maxStudents: Number(formData.maxStudents),
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        status: 'upcoming',
-        room: 'Phòng học 301 - Cơ sở Cầu Giấy',
-        onlineLink: null,
-        note: 'Lớp học vừa tạo mới',
-        students: [],
-      };
-      setClasses([newClass, ...classes]);
-      toast.success(`Đã tạo lớp học "${newClass.name}"`);
-    } else {
-      setClasses((prev) =>
-        prev.map((c) =>
-          c.id === modalState.item.id
-            ? {
-                ...c,
-                ...formData,
-                maxStudents: Number(formData.maxStudents),
-              }
-            : c
-        )
-      );
-      toast.success(`Đã cập nhật lớp học "${formData.name}"`);
-    }
+    const course = courses.find((item) => item.title === formData.courseName), teacher = teachers.find((item) => item.name === formData.teacher);
+    if (!course || !teacher) { toast.error('Chọn khóa học và giảng viên có trong hệ thống.'); return; }
+    const payload = { name: formData.name, courseId: course.id, teacherId: teacher.id, capacity: Number(formData.maxStudents), startDate: formData.startDate, endDate: formData.endDate };
+    try {
+      if (modalState.mode === 'create') { await classService.create(payload); toast.success(`Đã tạo lớp học "${formData.name}"`); }
+      else { await classService.update(modalState.item.id, payload); toast.success(`Đã cập nhật lớp học "${formData.name}"`); }
+      await loadClasses();
+    } catch (error) { toast.error(error.message || 'Không lưu được lớp học.'); return; }
 
     setModalState({ isOpen: false, mode: 'create', item: null });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     const item = deleteConfirm.item;
-    setClasses((prev) => prev.filter((c) => c.id !== item.id));
-    toast.success(`Đã xóa lớp học "${item.name}"`);
+    try { await classService.remove(item.id); toast.success(`Đã xóa lớp học "${item.name}"`); await loadClasses(); }
+    catch (error) { toast.error(error.message || 'Không thể xóa lớp học.'); }
     setDeleteConfirm({ isOpen: false, item: null });
   };
 
@@ -380,7 +368,7 @@ export default function ClassesPage() {
               required
               value={formData.courseName}
               onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
-              options={mockCoursesList.map((c) => ({ value: c.title, label: c.title }))}
+              options={courses.map((c) => ({ value: c.title, label: c.title }))}
             />
           </div>
 
@@ -405,12 +393,7 @@ export default function ClassesPage() {
                 required
                 value={formData.teacher}
                 onChange={(e) => setFormData({ ...formData, teacher: e.target.value })}
-                options={[
-                  { value: 'ThS. Trần Thị Mai Phương', label: 'ThS. Trần Thị Mai Phương' },
-                  { value: 'TS. Lê Hoàng Nam', label: 'TS. Lê Hoàng Nam' },
-                  { value: 'ThS. Bùi Quốc Huy', label: 'ThS. Bùi Quốc Huy' },
-                  { value: 'Thầy Phạm Gia Huy', label: 'Thầy Phạm Gia Huy' },
-                ]}
+                options={teachers.map((teacher) => ({ value: teacher.name, label: teacher.name }))}
               />
             </div>
             <div>

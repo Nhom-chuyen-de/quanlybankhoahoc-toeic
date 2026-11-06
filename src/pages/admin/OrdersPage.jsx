@@ -1,5 +1,5 @@
 // src/pages/admin/OrdersPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ShoppingCart, Filter, Eye, Receipt, Printer,
   CreditCard, FileText, CheckCircle2
@@ -17,11 +17,7 @@ import EmptyState from '../../components/shared/EmptyState';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { useToastContext } from '../../contexts/ToastContext';
-import { mockOrdersList } from '../../mock/business';
-
-// TODO: nối API - Thay mockOrdersList bằng GET /api/admin/orders
-// - POST /api/admin/orders/:id/invoice (Xuất hóa đơn điện tử)
-// - POST /api/admin/payments/:id/manual-confirm (Xác nhận thủ công)
+import { orderService, paymentService } from '../../services/adminService';
 
 const formatVnd = (value) => {
   if (value === null || value === undefined || value === 0) return '0 ₫';
@@ -41,7 +37,21 @@ const statusOptions = [
 
 export default function OrdersPage() {
   const toast = useToastContext();
-  const [orders, setOrders] = useState(mockOrdersList);
+  const [orders, setOrders] = useState([]);
+  useEffect(() => {
+    orderService.getOrders({ page: 1, limit: 100 }).then((response) => setOrders(response || []))
+      .catch((error) => toast.error(error.message || 'Không tải được đơn hàng.'));
+  }, []);
+
+  const openOrder = async (row) => {
+    setSelectedOrder(row);
+    try {
+      const response = await orderService.getOrderById(row.id);
+      setSelectedOrder(response);
+    } catch (error) {
+      toast.error(error.message || 'Không tải được chi tiết đơn hàng.');
+    }
+  };
 
   // Bộ lọc
   const [search, setSearch] = useState('');
@@ -93,7 +103,7 @@ export default function OrdersPage() {
         !q ||
         o.id.toLowerCase().includes(q) ||
         o.user.toLowerCase().includes(q) ||
-        o.userEmail.toLowerCase().includes(q);
+        (o.userEmail || o.email || '').toLowerCase().includes(q);
 
       const matchStatus = !statusFilter || o.status === statusFilter;
 
@@ -115,32 +125,14 @@ export default function OrdersPage() {
     if (!selectedOrder) return;
     setExportLoading(true);
 
-    setTimeout(() => {
-      // TODO: nối API - POST /api/admin/orders/:id/invoice
-      const now = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      const dateStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-
-      const newInvoice = {
-        number: `HD2611-${selectedOrder.id.replace(/\D/g, '') || '099'}`,
-        issuedAt: dateStr,
-        issuer: 'Bùi Văn Nam',
-      };
-
-      const updatedOrder = {
-        ...selectedOrder,
-        invoice: newInvoice,
-      };
-
+    orderService.createInvoice(selectedOrder.id).then((data) => {
+      const updatedOrder = { ...selectedOrder, invoice: { number: data.invoiceNumber } };
       setSelectedOrder(updatedOrder);
-      setOrders((prev) =>
-        prev.map((o) => (o.id === selectedOrder.id ? updatedOrder : o))
-      );
-
+      setOrders((prev) => prev.map((o) => (o.id === selectedOrder.id ? updatedOrder : o)));
       setExportLoading(false);
       setIsExportConfirmOpen(false);
       toast.success('Đã xuất hóa đơn');
-    }, 500);
+    }).catch((error) => { setExportLoading(false); toast.error(error.message || 'Không xuất được hóa đơn.'); });
   };
 
   // Xử lý xác nhận thanh toán thủ công cho mốc Chờ xử lý
@@ -148,39 +140,18 @@ export default function OrdersPage() {
     if (!manualConfirmPayment || !selectedOrder) return;
     setConfirmLoading(true);
 
-    setTimeout(() => {
-      // TODO: nối API - POST /api/admin/payments/:id/manual-confirm
-      const updatedPayments = (selectedOrder.payments || []).map((p) =>
-        p.id === manualConfirmPayment.id
-          ? {
-              ...p,
-              status: 'success',
-              confirmedBy: 'Nguyễn Văn An',
-              transactionCode:
-                p.transactionCode && p.transactionCode !== '—'
-                  ? p.transactionCode
-                  : `MANUAL-${Date.now().toString().slice(-6)}`,
-            }
-          : p
-      );
-
-      const updatedOrder = {
-        ...selectedOrder,
-        status: 'paid', // Cập nhật đơn thành Đã thanh toán
-        payments: updatedPayments,
-      };
-
+    paymentService.confirm(manualConfirmPayment.id).then(async () => {
+      const updatedOrder = await orderService.getOrderById(selectedOrder.id);
       setSelectedOrder(updatedOrder);
-      setOrders((prev) =>
-        prev.map((o) => (o.id === selectedOrder.id ? updatedOrder : o))
-      );
+      setOrders((prev) => prev.map((o) => o.id === selectedOrder.id ? { ...o, status: 'paid' } : o));
 
       setConfirmLoading(false);
       setManualConfirmPayment(null);
       toast.success(
         `Xác nhận thành công giao dịch ${manualConfirmPayment.id} (${formatVnd(manualConfirmPayment.amount)})!`
       );
-    }, 600);
+    }).catch((error) => toast.error(error.message || 'Không xác nhận được thanh toán.'))
+      .finally(() => { setConfirmLoading(false); setManualConfirmPayment(null); });
   };
 
   const columns = [
@@ -191,7 +162,7 @@ export default function OrdersPage() {
         const displayCode = row.id.slice(0, 8);
         return (
           <div
-            onClick={() => setSelectedOrder(row)}
+            onClick={() => openOrder(row)}
             className="cursor-pointer group"
           >
             <span className="font-mono font-bold text-gray-900 dark:text-gray-100 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
@@ -283,7 +254,7 @@ export default function OrdersPage() {
         <div className="flex items-center justify-end gap-1">
           <button
             title="Xem chi tiết đơn hàng"
-            onClick={() => setSelectedOrder(row)}
+            onClick={() => openOrder(row)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
           >
             <Eye className="h-4 w-4" />

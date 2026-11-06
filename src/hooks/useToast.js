@@ -1,5 +1,5 @@
 // hooks/useToast.js
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 let toastIdCounter = 0;
 
@@ -16,7 +16,7 @@ export function useToast() {
   }, []);
 
   // Hỗ trợ cả gọi trực tiếp: toast('msg'), toast.showToast('msg'), hoặc destructure: { showToast } = useToastContext()
-  const toast = Object.assign(
+  const toast = useMemo(() => Object.assign(
     (message, type = 'success') => addToast(message, type),
     {
       showToast: (message, type = 'success') => addToast(message, type),
@@ -27,7 +27,7 @@ export function useToast() {
       info: (msg) => addToast(msg, 'info'),
       wip: () => addToast('Chức năng sẽ cập nhật sau', 'info'),
     }
-  );
+  ), [addToast]);
 
   return { toasts, toast, removeToast, addToast };
 }
