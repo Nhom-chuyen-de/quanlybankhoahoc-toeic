@@ -1,41 +1,51 @@
 // src/context/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import { ROLES } from '../constants/roles';
+import { authService } from '../services/adminService';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // TODO: nối API - lấy thông tin user xác thực từ JWT token hoặc session thật
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('auth_user');
-      return savedUser ? JSON.parse(savedUser) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (userData) => {
-    // TODO: nối API POST /api/auth/login và lưu token vào Cookie / LocalStorage
+  useEffect(() => {
+    if (!localStorage.getItem('auth_token')) {
+      setIsLoading(false);
+      return;
+    }
+    authService.getMe()
+      .then((profile) => setUser({ id: profile.id, hoTen: profile.name, email: profile.email, vaiTro: ROLES.ADMIN }))
+      .catch(() => {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const login = async (credentials) => {
+    const result = await authService.login(credentials);
+    localStorage.setItem('auth_token', result.token);
     const fullUser = {
-      id: userData?.id || 'USR-001',
-      hoTen: userData?.hoTen || 'Người dùng thử',
-      email: userData?.email || 'user@example.com',
-      vaiTro: userData?.vaiTro || ROLES.ADMIN,
+      id: result.user.id,
+      hoTen: result.user.name,
+      email: result.user.email,
+      vaiTro: ROLES.ADMIN,
     };
     setUser(fullUser);
     localStorage.setItem('auth_user', JSON.stringify(fullUser));
     return fullUser;
   };
 
-  const logout = () => {
-    // TODO: nối API POST /api/auth/logout và xóa token
+  const logout = async () => {
+    try { if (localStorage.getItem('auth_token')) await authService.logout(); } catch { /* local sign-out still clears the session */ }
     setUser(null);
+    localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,5 +1,5 @@
 // src/pages/admin/CategoriesPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, Search, BookOpen, Calendar } from 'lucide-react';
 import PageHeader from '../../components/shared/PageHeader';
 import SearchBar from '../../components/shared/SearchBar';
@@ -11,7 +11,7 @@ import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import EmptyState from '../../components/shared/EmptyState';
 import Badge from '../../components/ui/Badge';
 import { useToastContext } from '../../contexts/ToastContext';
-import { mockCategories } from '../../mock/training';
+import { categoryService } from '../../services/adminService';
 
 // TODO: nối API - Thay thế bằng các endpoint:
 // - GET /api/admin/categories
@@ -21,7 +21,7 @@ import { mockCategories } from '../../mock/training';
 
 export default function CategoriesPage() {
   const toast = useToastContext();
-  const [categories, setCategories] = useState(mockCategories);
+  const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
 
   // State Modal Thêm / Sửa
@@ -32,6 +32,12 @@ export default function CategoriesPage() {
   });
   const [categoryName, setCategoryName] = useState('');
   const [nameError, setNameError] = useState('');
+
+  const loadCategories = async () => {
+    try { const result = await categoryService.list({ page: 1, limit: 100 }); setCategories(result); }
+    catch (error) { toast.error(error.message || 'Không tải được danh mục.'); }
+  };
+  useEffect(() => { loadCategories(); }, []);
 
   // State Confirm Xóa
   const [deleteConfirm, setDeleteConfirm] = useState({
@@ -57,42 +63,39 @@ export default function CategoriesPage() {
     setModalState({ isOpen: true, mode: 'edit', item });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault();
     if (!categoryName.trim()) {
       setNameError('Tên danh mục không được để trống');
       return;
     }
 
-    if (modalState.mode === 'create') {
-      const newCat = {
-        id: `CAT${String(categories.length + 1).padStart(2, '0')}`,
-        name: categoryName.trim(),
-        courseCount: 0,
-        createdAt: new Date().toLocaleDateString('vi-VN'),
-        description: 'Danh mục khóa học mới',
-      };
-      setCategories([newCat, ...categories]);
-      toast.success(`Đã thêm danh mục "${newCat.name}"`);
-    } else {
-      setCategories((prev) =>
-        prev.map((c) => (c.id === modalState.item.id ? { ...c, name: categoryName.trim() } : c))
-      );
-      toast.success(`Đã cập nhật danh mục "${categoryName.trim()}"`);
-    }
+    try {
+      if (modalState.mode === 'create') {
+        await categoryService.create({ name: categoryName.trim() });
+        toast.success(`Đã thêm danh mục "${categoryName.trim()}"`);
+      } else {
+        await categoryService.update(modalState.item.id, { name: categoryName.trim() });
+        toast.success(`Đã cập nhật danh mục "${categoryName.trim()}"`);
+      }
+      await loadCategories();
+    } catch (error) { toast.error(error.message || 'Không lưu được danh mục.'); return; }
 
     setModalState({ isOpen: false, mode: 'create', item: null });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     const item = deleteConfirm.item;
     if (item.courseCount > 0) {
       toast.error(`Không thể xóa danh mục đang có ${item.courseCount} khóa học liên kết!`);
       setDeleteConfirm({ isOpen: false, item: null });
       return;
     }
-    setCategories((prev) => prev.filter((c) => c.id !== item.id));
-    toast.success(`Đã xóa danh mục "${item.name}"`);
+    try {
+      await categoryService.remove(item.id);
+      toast.success(`Đã xóa danh mục "${item.name}"`);
+      await loadCategories();
+    } catch (error) { toast.error(error.message || 'Không thể xóa danh mục.'); }
     setDeleteConfirm({ isOpen: false, item: null });
   };
 

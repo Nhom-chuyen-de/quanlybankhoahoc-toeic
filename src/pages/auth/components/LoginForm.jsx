@@ -1,9 +1,9 @@
 // src/pages/auth/components/LoginForm.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, Ban } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Ban } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
-import { ROLES, ROLE_HOME } from '../../../constants/roles';
+import { ROLE_HOME } from '../../../constants/roles';
 import { useToast } from '../../../hooks/useToast';
 
 export default function LoginForm({ onForgotPassword }) {
@@ -21,7 +21,7 @@ export default function LoginForm({ onForgotPassword }) {
   const [errors, setErrors] = useState({});
 
   // Banner lỗi mẫu để nối API sau này
-  const [mockErrorBanner, setMockErrorBanner] = useState(null); // 'wrong_credentials' | 'account_locked' | null
+  const [loginError, setLoginError] = useState('');
 
   const handleGoogleLogin = () => {
     toast.info('Chức năng đăng nhập Google sẽ cập nhật sau');
@@ -29,7 +29,7 @@ export default function LoginForm({ onForgotPassword }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMockErrorBanner(null);
+    setLoginError('');
 
     const newErrors = {};
     if (!email.trim()) {
@@ -50,44 +50,15 @@ export default function LoginForm({ onForgotPassword }) {
     setErrors({});
     setIsLoading(true);
 
-    // TODO: nối API đăng nhập ở đây
-    // Vai trò thực tế sẽ do server trả về sau khi xác thực thông tin tài khoản.
-    // Ví dụ:
-    // const res = await authApi.login({ email, password, rememberMe });
-    // if (res.status === 'locked') setMockErrorBanner('account_locked');
-    // else if (res.error) setMockErrorBanner('wrong_credentials');
-    // else login(res.user);
-
-    // GIẢ LẬP ĐĂNG NHẬP SAU 1 GIÂY:
-    // Tự động nhận diện vai trò dựa trên email (hoặc mặc định Quản trị viên để quản lý hệ thống)
-    setTimeout(() => {
+    try {
+      const signedInUser = await login({ email: email.trim(), password, rememberMe });
+      toast.success('Đăng nhập thành công!');
+      navigate(ROLE_HOME[signedInUser.vaiTro] || '/admin');
+    } catch (error) {
+      setLoginError(error.message || 'Không thể đăng nhập. Vui lòng thử lại.');
+    } finally {
       setIsLoading(false);
-
-      const normalizedEmail = email.toLowerCase().trim();
-      let determinedRole = ROLES.ADMIN;
-      let displayName = 'Quản Trị Viên';
-
-      if (normalizedEmail.includes('giangvien') || normalizedEmail.includes('teacher')) {
-        determinedRole = ROLES.TEACHER;
-        displayName = 'Giảng Viên Minh Quân';
-      } else if (normalizedEmail.includes('hocvien') || normalizedEmail.includes('student')) {
-        determinedRole = ROLES.STUDENT;
-        displayName = 'Học Viên Hoàng Nam';
-      }
-
-      const fakeUser = {
-        id: 'usr_' + Date.now().toString(36),
-        hoTen: displayName,
-        email: email,
-        vaiTro: determinedRole,
-      };
-
-      login(fakeUser);
-      toast.success(`Đăng nhập thành công!`);
-      
-      const targetPath = ROLE_HOME[fakeUser.vaiTro] || '/admin';
-      navigate(targetPath);
-    }, 1000);
+    }
   };
 
   return (
@@ -129,18 +100,10 @@ export default function LoginForm({ onForgotPassword }) {
         </span>
       </div>
 
-      {/* Banner lỗi mẫu (chuẩn bị sẵn để nối backend theo trang_thai) */}
-      {mockErrorBanner === 'wrong_credentials' && (
-        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.</span>
-        </div>
-      )}
-
-      {mockErrorBanner === 'account_locked' && (
+      {loginError && (
         <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400 text-xs flex items-center gap-2">
           <Ban className="w-4 h-4 shrink-0" />
-          <span>Tài khoản đã bị khóa. Vui lòng liên hệ ban quản trị để được hỗ trợ.</span>
+          <span>{loginError}</span>
         </div>
       )}
 

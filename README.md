@@ -14,6 +14,10 @@ npm run dev
 
 Truy cập: **http://localhost:5173/**
 
+## Backend Admin API
+
+Backend Express + SQL Server nằm trong [`backend/README.md`](backend/README.md). Tạo database từ `backend/db/QuanLyDaoTao_HopNhat.sql`, cấu hình `backend/.env`, cài dependencies trong thư mục `backend` rồi chạy `npm run dev`. Frontend đọc URL API từ `VITE_API_URL` (mặc định `http://localhost:4000/api`).
+
 Đăng nhập tại `/admin/login` → tự động vào `/admin` (Dashboard).
 
 ---

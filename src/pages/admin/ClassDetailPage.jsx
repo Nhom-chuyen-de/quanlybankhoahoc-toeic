@@ -1,5 +1,5 @@
 // src/pages/admin/ClassDetailPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, School, Users, Calendar, Clock, MapPin, Link2,
@@ -17,17 +17,24 @@ import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { useToastContext } from '../../contexts/ToastContext';
 import { mockClassesList } from '../../mock/training';
+import { classService } from '../../services/adminService';
 
 export default function ClassDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToastContext();
 
-  const classData = useMemo(() => {
+  const fallbackClass = useMemo(() => {
     return mockClassesList.find((c) => c.id === id) || mockClassesList[0];
   }, [id]);
+  const [classData, setClassData] = useState(fallbackClass);
 
   const [students, setStudents] = useState(classData.students || []);
+  useEffect(() => {
+    classService.getById(id)
+      .then((result) => { setClassData(result); setStudents(result.students || []); })
+      .catch((error) => toast.error(error.message || 'Không tải được chi tiết lớp học.'));
+  }, [id]);
 
   // Modal Thêm học viên
   const [addStudentModal, setAddStudentModal] = useState(false);
@@ -44,31 +51,27 @@ export default function ClassDetailPage() {
     student: null,
   });
 
-  const handleAddStudent = (e) => {
+  const handleAddStudent = async (e) => {
     e?.preventDefault();
     if (!newStudent.name.trim() || !newStudent.email.trim()) {
       toast.error('Vui lòng điền đầy đủ họ tên và email học viên');
       return;
     }
 
-    const item = {
-      id: `STU${String(students.length + 1).padStart(2, '0')}`,
-      name: newStudent.name.trim(),
-      email: newStudent.email.trim(),
-      phone: newStudent.phone || '0901234567',
-      targetScore: newStudent.targetScore || '650/990',
-      status: 'studying',
-      attendanceRate: 100,
-    };
-
-    setStudents([...students, item]);
+    let item;
+    try {
+      item = await classService.addStudent(id, { email: newStudent.email.trim(), targetScore: newStudent.targetScore });
+    } catch (error) { toast.error(error.message || 'Không thêm được học viên. Học viên cần có tài khoản đang hoạt động.'); return; }
+    setStudents((previous) => [...previous, item]);
     toast.success(`Đã thêm học viên "${item.name}" vào lớp`);
     setAddStudentModal(false);
     setNewStudent({ name: '', email: '', phone: '', targetScore: '700/990' });
   };
 
-  const handleDropStudent = () => {
+  const handleDropStudent = async () => {
     const student = dropConfirm.student;
+    try { await classService.updateStudent(id, student.id, 'dropped'); }
+    catch (error) { toast.error(error.message || 'Không cập nhật được ghi danh.'); return; }
     setStudents((prev) =>
       prev.map((s) => (s.id === student.id ? { ...s, status: 'dropped' } : s))
     );

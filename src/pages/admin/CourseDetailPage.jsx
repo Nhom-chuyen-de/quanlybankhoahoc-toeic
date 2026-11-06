@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, BookOpen, Layers, Users, School, Video, FileText,
@@ -18,6 +18,7 @@ import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { useToastContext } from '../../contexts/ToastContext';
 import { mockCoursesList, mockCourseEnrollments } from '../../mock/training';
+import { courseService } from '../../services/adminService';
 import { COURSE_LEVEL, COURSE_FORMAT, MODERATION_STATUS } from '../../constants/enums';
 
 const formatVnd = (v) => {
@@ -111,8 +112,19 @@ export default function CourseDetailPage() {
   const navigate = useNavigate();
   const toast = useToastContext();
 
-  const course = useMemo(() => {
-    return mockCoursesList.find((c) => c.id === id) || mockCoursesList[0];
+  const fallbackCourse = useMemo(() => mockCoursesList.find((c) => c.id === id) || mockCoursesList[0], [id]);
+  const [course, setCourse] = useState(fallbackCourse);
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([courseService.getCourseById(id), courseService.getEnrollments(id)])
+      .then(([courseData, enrollmentData]) => {
+        if (cancelled) return;
+        const toDate = (value) => value ? new Date(value).toLocaleDateString('vi-VN') : null;
+        setCourse(courseData);
+        setStudents(enrollmentData.map((student) => ({ ...student, expireDate: toDate(student.expireDate), startDate: toDate(student.startDate) })));
+      })
+      .catch((error) => toast.error(error.message || 'Không tải được dữ liệu khóa học.'));
+    return () => { cancelled = true; };
   }, [id]);
 
   const [collapsedChapters, setCollapsedChapters] = useState({});
@@ -207,7 +219,7 @@ export default function CourseDetailPage() {
   };
 
   // Xác nhận gia hạn
-  const handleConfirmExtend = () => {
+  const handleConfirmExtend = async () => {
     if (!newExpireDateRaw) {
       setDateError('Vui lòng chọn ngày hết hạn mới.');
       return;
@@ -232,6 +244,9 @@ export default function CourseDetailPage() {
     }
 
     const newFormatted = yyyyMmDdToDisplay(newExpireDateRaw);
+    try {
+      await courseService.updateEnrollment(id, extendStudent.id, { expireDate: new Date(`${newExpireDateRaw}T00:00:00`).toISOString(), status: 'active' });
+    } catch (error) { toast.error(error.message || 'Không gia hạn được ghi danh.'); return; }
     setStudents((prev) =>
       prev.map((s) => {
         if (s.id === extendStudent.id) {
@@ -257,8 +272,10 @@ export default function CourseDetailPage() {
   };
 
   // Xác nhận hủy đăng ký
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = async () => {
     if (cancelStudent) {
+      try { await courseService.updateEnrollment(id, cancelStudent.id, { status: 'cancelled' }); }
+      catch (error) { toast.error(error.message || 'Không hủy được ghi danh.'); return; }
       setStudents((prev) =>
         prev.map((s) => (s.id === cancelStudent.id ? { ...s, status: 'cancelled' } : s))
       );

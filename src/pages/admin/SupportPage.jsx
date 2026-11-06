@@ -1,5 +1,5 @@
 // src/pages/admin/SupportPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   MessageSquare, Send, Search, LayoutGrid, List,
   Bell, Eye, Phone, Mail, MessageCircle
@@ -16,13 +16,7 @@ import Modal from '../../components/ui/Modal';
 import Tabs from '../../components/ui/Tabs';
 import Badge from '../../components/ui/Badge';
 import { useToastContext } from '../../contexts/ToastContext';
-import { mockTickets, mockBroadcastNotifications } from '../../mock/support';
-
-// TODO: nối API
-// - GET /api/admin/tickets
-// - PATCH /api/admin/tickets/:id (cập nhật status, priority)
-// - POST /api/admin/tickets/:id/reply (gửi phản hồi hội thoại)
-// - POST /api/admin/notifications/broadcast (gửi thông báo hàng loạt)
+import { supportService } from '../../services/adminService';
 
 const statusConfig = {
   new: { label: 'Mới', variant: 'blue', bg: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' },
@@ -54,7 +48,9 @@ export default function SupportPage() {
   };
 
   // State Tickets
-  const [tickets, setTickets] = useState(mockTickets);
+  const [tickets, setTickets] = useState([]);
+  const loadTickets = () => supportService.list({ page: 1, limit: 100 }).then((r) => setTickets((r || []).map((t) => ({ ...t, messages: t.messages || [] }))));
+  useEffect(() => { loadTickets().catch((e) => showToast(e.message || 'Không tải được yêu cầu hỗ trợ.', 'error')); }, []);
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'kanban'
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -66,13 +62,13 @@ export default function SupportPage() {
   const [replyMessage, setReplyMessage] = useState('');
 
   // State Broadcast Notifications
-  const [broadcasts, setBroadcasts] = useState(mockBroadcastNotifications);
+  const [broadcasts, setBroadcasts] = useState([]);
   const [notifTitle, setNotifTitle] = useState('');
   const [notifContent, setNotifContent] = useState('');
   const [targetAudience, setTargetAudience] = useState('all');
   const [targetClass, setTargetClass] = useState('toeic_650');
   const [channelInApp, setChannelInApp] = useState(true);
-  const [channelEmail, setChannelEmail] = useState(true);
+  const [channelEmail, setChannelEmail] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   // Filter tickets
@@ -90,83 +86,55 @@ export default function SupportPage() {
   }, [tickets, search, categoryFilter, priorityFilter, statusFilter]);
 
   // Handle Send Reply in Drawer
-  const handleSendReply = (e) => {
+  const openTicket = async (ticket) => {
+    setSelectedTicket(ticket);
+    try {
+      const data = await supportService.replies(ticket.id);
+      setSelectedTicket({ ...ticket, messages: (data || []).map((m) => ({ id: m.id, content: m.content, sender: m.sender, isUser: !m.isAdmin, time: m.createdAt })) });
+    } catch (error) { showToast(error.message || 'Không tải được hội thoại.', 'error'); }
+  };
+
+  const handleSendReply = async (e) => {
     e.preventDefault();
     if (!replyMessage.trim() || !selectedTicket) return;
 
-    const newMsg = {
-      id: `msg-${Date.now()}`,
-      sender: 'Bùi Văn Nam',
-      isUser: false,
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=faces',
-      time: 'Vừa xong',
-      content: replyMessage.trim()
-    };
-
-    const updated = {
-      ...selectedTicket,
-      updatedAt: 'Vừa xong',
-      status: selectedTicket.status === 'new' ? 'in_progress' : selectedTicket.status,
-      messages: [...selectedTicket.messages, newMsg]
-    };
-
-    setSelectedTicket(updated);
-    setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-    setReplyMessage('');
-    showToast('Đã gửi phản hồi thành công đến học viên!');
+    try {
+      await supportService.reply(selectedTicket.id, replyMessage.trim());
+      if (selectedTicket.status === 'new') await supportService.update(selectedTicket.id, { status: 'in_progress' });
+      await loadTickets();
+      const data = await supportService.replies(selectedTicket.id);
+      setSelectedTicket({ ...selectedTicket, status: selectedTicket.status === 'new' ? 'in_progress' : selectedTicket.status, messages: (data || []).map((m) => ({ id: m.id, content: m.content, sender: m.sender, isUser: !m.isAdmin, time: m.createdAt })) });
+      setReplyMessage(''); showToast('Đã gửi phản hồi thành công đến học viên!');
+    } catch (error) { showToast(error.message || 'Không gửi được phản hồi.', 'error'); }
   };
 
   // Handle Change Status / Priority in Drawer
-  const handleUpdateTicketMeta = (field, value) => {
+  const handleUpdateTicketMeta = async (field, value) => {
     if (!selectedTicket) return;
-    const updated = { ...selectedTicket, [field]: value };
-    setSelectedTicket(updated);
-    setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-    showToast(`Đã cập nhật ${field === 'status' ? 'trạng thái' : 'độ ưu tiên'} ticket!`);
+    try {
+      await supportService.update(selectedTicket.id, { [field]: value });
+      const updated = { ...selectedTicket, [field]: value }; setSelectedTicket(updated);
+      setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      showToast(`Đã cập nhật ${field === 'status' ? 'trạng thái' : 'độ ưu tiên'} ticket!`);
+    } catch (error) { showToast(error.message || 'Không cập nhật được yêu cầu.', 'error'); }
   };
 
   // Handle Send Broadcast Notification
-  const handleSendBroadcast = (e) => {
+  const handleSendBroadcast = async (e) => {
     e.preventDefault();
     if (!notifTitle.trim() || !notifContent.trim()) {
       showToast('Vui lòng nhập đầy đủ tiêu đề và nội dung thông báo', 'error');
       return;
     }
 
-    let targetLabel = 'Tất cả người dùng';
-    let count = 2450;
-    if (targetAudience === 'role_student') {
-      targetLabel = 'Tất cả học viên';
-      count = 1850;
-    } else if (targetAudience === 'role_teacher') {
-      targetLabel = 'Toàn bộ Giảng viên';
-      count = 42;
-    } else if (targetAudience === 'class') {
-      targetLabel = targetClass === 'toeic_650' ? 'Lớp TOEIC 650+ K10' : 'Lớp IELTS Intensive K15';
-      count = 32;
-    }
-
-    const channels = [];
-    if (channelInApp) channels.push('In-app');
-    if (channelEmail) channels.push('Email');
-
-    const newNotif = {
-      id: `NOTIF-00${broadcasts.length + 1}`,
-      title: notifTitle.trim(),
-      content: notifContent.trim(),
-      targetType: targetAudience,
-      targetLabel,
-      channel: channels.join(' & ') || 'In-app',
-      recipientCount: count,
-      sentAt: 'Vừa xong',
-      sender: 'Bùi Văn Nam',
-      status: 'success'
-    };
-
-    setBroadcasts([newNotif, ...broadcasts]);
-    setNotifTitle('');
-    setNotifContent('');
-    showToast(`Đã gửi thông báo hàng loạt tới ${count} người dùng!`);
+    if (targetAudience === 'class') { showToast('Gửi theo lớp chưa được API hỗ trợ; hãy chọn tất cả người dùng, học viên hoặc giảng viên.', 'error'); return; }
+    if (!channelInApp) { showToast('API hiện chỉ gửi thông báo trong ứng dụng.', 'error'); return; }
+    try {
+      const result = await supportService.broadcast({ title: notifTitle.trim(), content: notifContent.trim(), recipient: ({ all: 'all', role_student: 'student', role_teacher: 'teacher' })[targetAudience] });
+      const targetLabel = ({ all: 'Tất cả người dùng', role_student: 'Tất cả học viên', role_teacher: 'Tất cả giảng viên' })[targetAudience];
+      setBroadcasts((previous) => [{ id: `sent-${Date.now()}`, title: notifTitle.trim(), content: notifContent.trim(), targetType: targetAudience, targetLabel, channel: 'In-app', recipientCount: result.sent, sentAt: new Date().toLocaleString('vi-VN'), sender: 'Quản trị viên', status: 'success' }, ...previous]);
+      setNotifTitle(''); setNotifContent(''); showToast(`Đã gửi thông báo trong ứng dụng tới ${result.sent} người dùng.`);
+    } catch (error) { showToast(error.message || 'Không gửi được thông báo.', 'error'); }
   };
 
   // Table columns definition (Xóa mã TCK-xxxx, giữ (n phản hồi))
@@ -180,7 +148,7 @@ export default function SupportPage() {
             <span className="text-xs text-gray-400">({row.messages?.length || 0} phản hồi)</span>
           </div>
           <button
-            onClick={() => setSelectedTicket(row)}
+            onClick={() => openTicket(row)}
             className="text-left font-semibold text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 line-clamp-1 mt-1 transition-colors"
           >
             {row.title}
@@ -253,7 +221,7 @@ export default function SupportPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setSelectedTicket(row)}
+          onClick={() => openTicket(row)}
           className="text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
         >
           {row.status === 'closed' ? 'Xem' : 'Xử lý'}
@@ -476,7 +444,7 @@ export default function SupportPage() {
                           return (
                             <div
                               key={t.id}
-                              onClick={() => setSelectedTicket(t)}
+                              onClick={() => openTicket(t)}
                               className="bg-white dark:bg-gray-800 p-3.5 rounded-lg border border-gray-200 dark:border-gray-700/80 shadow-xs hover:shadow-md hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-all group"
                             >
                               <div className="flex items-center justify-between mb-2">
@@ -617,9 +585,10 @@ export default function SupportPage() {
                       type="checkbox"
                       checked={channelEmail}
                       onChange={(e) => setChannelEmail(e.target.checked)}
+                      disabled
                       className="rounded text-indigo-600 focus:ring-indigo-500"
                     />
-                    Gửi qua Email
+                    Gửi qua Email (chưa cấu hình)
                   </label>
                 </div>
               </div>

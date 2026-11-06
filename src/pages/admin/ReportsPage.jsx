@@ -1,5 +1,5 @@
 // src/pages/admin/ReportsPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import {
   BarChart3, Users, BookOpen, TrendingUp, Download,
   Filter, Plus, Trash2, Clock, RefreshCw
@@ -12,7 +12,8 @@ import Input from '../../components/ui/Input';
 import Badge from '../../components/ui/Badge';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import { useToastContext } from '../../contexts/ToastContext';
-import { reportCategories, mockGeneratedReports } from '../../mock/reports';
+import { reportCategories } from '../../mock/reports';
+import { reportService, courseService, classService } from '../../services/adminService';
 
 // TODO: nối API
 // - GET /api/admin/reports (Danh sách báo cáo đã tạo)
@@ -53,53 +54,45 @@ export default function ReportsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Generated Reports List State
-  const [reports, setReports] = useState(mockGeneratedReports);
+  const [reports, setReports] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [deleteId, setDeleteId] = useState(null);
 
+  const loadReportData = async () => {
+    try {
+      const [reportResult, courseResult, classResult] = await Promise.all([
+        reportService.list({ page: 1, limit: 100 }), courseService.getCourses({ page: 1, limit: 100 }), classService.list({ page: 1, limit: 100 }),
+      ]);
+      setReports(reportResult); setCourses(courseResult); setClasses(classResult);
+    } catch (error) { showToast(error.message || 'Không tải được báo cáo.', 'error'); }
+  };
+  useEffect(() => { loadReportData(); }, []);
+
   // Handle Generate Report - Tên theo mẫu: Báo cáo {loại} {từ ngày} - {đến ngày}
-  const handleGenerateReport = (e) => {
+  const handleGenerateReport = async (e) => {
     e.preventDefault();
     setIsGenerating(true);
 
-    const activeCat = reportCategories.find((c) => c.id === selectedType) || reportCategories[0];
-    const typeClean = activeCat.title.replace('Báo cáo ', '');
-
-    setTimeout(() => {
-      const now = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      const createStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/2026 ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-      
-      const expireStr = `${pad(now.getDate())}/${pad(now.getMonth() + 2 > 12 ? 1 : now.getMonth() + 2)}/2026 ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-
-      // Lấy phần ngày từ ô lọc ngày
-      const fromDay = startDate.includes(' ') ? startDate.split(' ')[0] : startDate;
-      const toDay = endDate.includes(' ') ? endDate.split(' ')[0] : endDate;
-
-      const newReport = {
-        id: `REP-2026-${Math.floor(200 + Math.random() * 800)}`,
-        name: `Báo cáo ${typeClean} ${fromDay} - ${toDay}`,
-        type: selectedType,
-        typeLabel: typeClean,
-        author: 'Bùi Văn Nam',
-        createdAt: createStr,
-        expiresAt: expireStr,
-        format: exportFormat,
-        fileSize: `${(Math.random() * 3 + 1).toFixed(1)} MB`,
-        status: 'ready',
-      };
-
-      setReports([newReport, ...reports]);
-      setIsGenerating(false);
-      showToast(`Đã tạo thành công Báo cáo ${typeClean} (${exportFormat})!`);
-    }, 600);
+    try {
+      const report = await reportService.generate({ type: selectedType, format: exportFormat, startDate, endDate, courseId: courseFilter, classId: classFilter });
+      setReports((previous) => [report, ...previous]);
+      showToast(`Đã tạo báo cáo ${report.typeLabel} dạng CSV.`);
+    } catch (error) { showToast(error.message || 'Không tạo được báo cáo.', 'error'); }
+    finally { setIsGenerating(false); }
   };
 
   // Handle Delete Report
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteId) return;
-    setReports((prev) => prev.filter((r) => r.id !== deleteId));
-    showToast('Đã xóa tệp báo cáo khỏi bộ lưu trữ');
+    try { await reportService.remove(deleteId); setReports((prev) => prev.filter((r) => r.id !== deleteId)); showToast('Đã xóa tệp báo cáo khỏi bộ lưu trữ'); }
+    catch (error) { showToast(error.message || 'Không xóa được báo cáo.', 'error'); }
     setDeleteId(null);
+  };
+
+  const handleDownload = async (report) => {
+    try { await reportService.download(report.id); }
+    catch (error) { showToast(error.message || 'Không tải được báo cáo.', 'error'); }
   };
 
   // Table Columns - Đã bỏ cột "Mã tệp" và "Dung lượng", Người tạo chỉ hiện họ tên
@@ -159,7 +152,7 @@ export default function ReportsPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => showToast(`Bắt đầu tải xuống tệp báo cáo (${row.format.toLowerCase()})...`)}
+            onClick={() => handleDownload(row)}
             className="text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 flex items-center gap-1 text-xs"
           >
             <Download className="w-3.5 h-3.5" />
@@ -281,9 +274,7 @@ export default function ReportsPage() {
               onChange={(e) => setCourseFilter(e.target.value)}
             >
               <option value="all">Tất cả khóa học</option>
-              <option value="toeic_650">TOEIC 650+ Chinh phục mục tiêu</option>
-              <option value="ielts_65">IELTS Intensive 6.5 Cấp tốc</option>
-              <option value="toeic_4skills">TOEIC 4 Kỹ năng Chuyên sâu</option>
+              {courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}
             </Select>
           </div>
 
@@ -296,8 +287,7 @@ export default function ReportsPage() {
               onChange={(e) => setClassFilter(e.target.value)}
             >
               <option value="all">Tất cả lớp học</option>
-              <option value="toeic_k10">Lớp TOEIC-K10 (Tối 2-4-6)</option>
-              <option value="ielts_k15">Lớp IELTS-K15 (Tối 3-5-7)</option>
+              {classes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </Select>
           </div>
 
@@ -310,8 +300,6 @@ export default function ReportsPage() {
                 value={exportFormat}
                 onChange={(e) => setExportFormat(e.target.value)}
               >
-                <option value="XLSX">Excel (.xlsx)</option>
-                <option value="PDF">PDF (.pdf)</option>
                 <option value="CSV">CSV (.csv)</option>
               </Select>
             </div>

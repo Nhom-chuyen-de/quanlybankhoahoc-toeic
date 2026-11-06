@@ -1,5 +1,5 @@
 // src/pages/admin/RefundsPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   RotateCcw, Search, Filter, Eye, CheckCircle, XCircle,
   Clock, AlertCircle, Building2, User, CreditCard, FileText,
@@ -17,13 +17,7 @@ import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/shared/EmptyState';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { useToastContext } from '../../contexts/ToastContext';
-import { mockRefundsList } from '../../mock/business';
-
-// TODO: nối API
-// - GET /api/admin/refunds (Lấy danh sách yêu cầu hoàn tiền)
-// - POST /api/admin/refunds/:id/approve (Chấp nhận yêu cầu)
-// - POST /api/admin/refunds/:id/reject (Từ chối yêu cầu kèm lý do)
-// - POST /api/admin/refunds/:id/complete (Đánh dấu đã chuyển tiền hoàn)
+import { refundService } from '../../services/adminService';
 
 const formatVnd = (value) => {
   if (value === null || value === undefined || value === 0) return '0 ₫';
@@ -40,7 +34,9 @@ const statusOptions = [
 
 export default function RefundsPage() {
   const toast = useToastContext();
-  const [refunds, setRefunds] = useState(mockRefundsList);
+  const [refunds, setRefunds] = useState([]);
+  const loadRefunds = () => refundService.list({ page: 1, limit: 100 }).then((r) => setRefunds(r || []));
+  useEffect(() => { loadRefunds().catch((e) => toast.error(e.message || 'Không tải được yêu cầu hoàn tiền.')); }, []);
 
   // Bộ lọc
   const [search, setSearch] = useState('');
@@ -59,11 +55,11 @@ export default function RefundsPage() {
       const q = search.toLowerCase().trim();
       const matchSearch =
         !q ||
-        item.user.toLowerCase().includes(q) ||
-        item.userEmail.toLowerCase().includes(q) ||
-        item.paymentId.toLowerCase().includes(q) ||
-        item.orderId.toLowerCase().includes(q) ||
-        item.reason.toLowerCase().includes(q);
+        (item.user || '').toLowerCase().includes(q) ||
+        (item.userEmail || '').toLowerCase().includes(q) ||
+        (item.paymentId || '').toLowerCase().includes(q) ||
+        (item.orderId || '').toLowerCase().includes(q) ||
+        (item.reason || '').toLowerCase().includes(q);
 
       const matchStatus = !statusFilter || item.status === statusFilter;
       return matchSearch && matchStatus;
@@ -77,32 +73,10 @@ export default function RefundsPage() {
   };
 
   // Hành động: Chấp nhận yêu cầu hoàn tiền
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!selectedRefund) return;
-    const nowStr = getNowStr();
-
-    // TODO: nối API - POST /api/admin/refunds/:id/approve
-    setRefunds((prev) =>
-      prev.map((r) =>
-        r.id === selectedRefund.id
-          ? {
-              ...r,
-              status: 'approved',
-              processedDate: nowStr,
-              adminNote: 'Đã chấp nhận yêu cầu hoàn tiền. Đang chuyển kế toán xử lý lệnh thanh toán.',
-            }
-          : r
-      )
-    );
-
-    setSelectedRefund((prev) => ({
-      ...prev,
-      status: 'approved',
-      processedDate: nowStr,
-      adminNote: 'Đã chấp nhận yêu cầu hoàn tiền. Đang chuyển kế toán xử lý lệnh thanh toán.',
-    }));
-
-    toast.success(`Đã chấp nhận yêu cầu hoàn tiền ${selectedRefund.id}!`);
+    try { await refundService.approve(selectedRefund.id); await loadRefunds(); setSelectedRefund((r) => ({ ...r, status: 'approved' })); toast.success(`Đã chấp nhận yêu cầu hoàn tiền ${selectedRefund.id}!`); }
+    catch (e) { toast.error(e.message || 'Không thể chấp nhận yêu cầu.'); }
   };
 
   // Hành động: Mở modal từ chối
@@ -112,67 +86,22 @@ export default function RefundsPage() {
   };
 
   // Xác nhận từ chối kèm lý do
-  const handleConfirmReject = (e) => {
+  const handleConfirmReject = async (e) => {
     e.preventDefault();
     if (!rejectReason.trim()) {
       toast.error('Vui lòng nhập lý do từ chối yêu cầu hoàn tiền');
       return;
     }
 
-    const nowStr = getNowStr();
-
-    // TODO: nối API - POST /api/admin/refunds/:id/reject
-    setRefunds((prev) =>
-      prev.map((r) =>
-        r.id === selectedRefund.id
-          ? {
-              ...r,
-              status: 'rejected',
-              processedDate: nowStr,
-              adminNote: `Từ chối: ${rejectReason}`,
-            }
-          : r
-      )
-    );
-
-    setSelectedRefund((prev) => ({
-      ...prev,
-      status: 'rejected',
-      processedDate: nowStr,
-      adminNote: `Từ chối: ${rejectReason}`,
-    }));
-
-    setIsRejectModalOpen(false);
-    toast.error(`Đã từ chối yêu cầu hoàn tiền ${selectedRefund.id}!`);
+    try { await refundService.reject(selectedRefund.id, rejectReason.trim()); await loadRefunds(); setSelectedRefund((r) => ({ ...r, status: 'rejected', adminNote: `Từ chối: ${rejectReason}` })); setIsRejectModalOpen(false); toast.success(`Đã từ chối yêu cầu hoàn tiền ${selectedRefund.id}.`); }
+    catch (e) { toast.error(e.message || 'Không thể từ chối yêu cầu.'); }
   };
 
   // Hành động: Đánh dấu đã hoàn tiền
-  const handleMarkAsRefunded = () => {
+  const handleMarkAsRefunded = async () => {
     if (!selectedRefund) return;
-    const nowStr = getNowStr();
-
-    // TODO: nối API - POST /api/admin/refunds/:id/complete
-    setRefunds((prev) =>
-      prev.map((r) =>
-        r.id === selectedRefund.id
-          ? {
-              ...r,
-              status: 'refunded',
-              processedDate: nowStr,
-              adminNote: 'Đã chuyển khoản hoàn tiền thành công qua tài khoản ngân hàng của học viên.',
-            }
-          : r
-      )
-    );
-
-    setSelectedRefund((prev) => ({
-      ...prev,
-      status: 'refunded',
-      processedDate: nowStr,
-      adminNote: 'Đã chuyển khoản hoàn tiền thành công qua tài khoản ngân hàng của học viên.',
-    }));
-
-    toast.success(`Đã đánh dấu hoàn tất chuyển tiền cho yêu cầu ${selectedRefund.id}!`);
+    try { await refundService.complete(selectedRefund.id); await loadRefunds(); setSelectedRefund((r) => ({ ...r, status: 'refunded' })); toast.success(`Đã đánh dấu hoàn tất chuyển tiền cho yêu cầu ${selectedRefund.id}!`); }
+    catch (e) { toast.error(e.message || 'Không thể hoàn tất yêu cầu.'); }
   };
 
   // Cấu hình bảng
@@ -480,7 +409,7 @@ export default function RefundsPage() {
               )}
 
               {/* Nút Đánh dấu đã hoàn tiền (khi đã chấp nhận hoặc đang pending) */}
-              {selectedRefund.status !== 'refunded' && selectedRefund.status !== 'rejected' && (
+              {selectedRefund.status === 'approved' && (
                 <Button
                   onClick={handleMarkAsRefunded}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 py-2.5 text-xs font-medium"
@@ -530,7 +459,7 @@ export default function RefundsPage() {
       >
         <form onSubmit={handleConfirmReject} className="space-y-3 py-1">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Học viên sẽ nhận được thông báo kèm lý do từ chối cụ thể. Vui lòng nêu rõ lý do theo điều khoản chính sách của trung tâm:
+            Ghi lý do để Admin tham khảo khi xử lý yêu cầu:
           </p>
           <textarea
             className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-2.5 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"

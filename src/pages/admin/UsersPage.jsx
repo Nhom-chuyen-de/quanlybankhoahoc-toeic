@@ -1,5 +1,5 @@
 // src/pages/admin/UsersPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   UserPlus, Users, Download, Filter, Eye, Pencil, Lock, Unlock,
   Trash2, AlertTriangle, Search, X, Check, BookOpen, Receipt,
@@ -20,7 +20,7 @@ import Badge from '../../components/ui/Badge';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import EmptyState from '../../components/shared/EmptyState';
 import { useToastContext } from '../../contexts/ToastContext';
-import { mockUsers, mockUserStats } from '../../mock/users';
+import { userService } from '../../services/adminService';
 
 // TODO: nối API - Thay mockUsers bằng dữ liệu thật từ GET /api/admin/users
 // - POST /api/admin/users (Thêm người dùng)
@@ -78,7 +78,8 @@ function UserAvatar({ name, size = 'md', className = '' }) {
 
 export default function UsersPage() {
   const toast = useToastContext();
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -114,6 +115,18 @@ export default function UsersPage() {
     user: null,
     action: '', // 'ban' | 'unlock' | 'delete' | 'bulk_ban' | 'bulk_delete'
   });
+
+  const loadUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await userService.getUsers({ page: 1, limit: 100, q: search, role: roleFilter, status: statusFilter });
+      setUsers(result.map((user) => ({ ...user, phone: user.phone || '', classes: user.classes || [], orders: user.orders || [] })));
+    } catch (error) {
+      toast.error(error.message || 'Không tải được danh sách người dùng.');
+    } finally { setIsLoading(false); }
+  }, [search, roleFilter, statusFilter, toast]);
+
+  useEffect(() => { loadUsers(); }, [loadUsers]);
 
   // Lọc dữ liệu theo tìm kiếm (tên, email, SĐT), vai trò và trạng thái
   const filteredUsers = useMemo(() => {
@@ -166,7 +179,7 @@ export default function UsersPage() {
       name: 'Họ và tên không được để trống',
       email: 'Email không đúng định dạng (ví dụ: user@domain.com)',
       phone: 'Số điện thoại phải đủ 10 chữ số hợp lệ',
-      password: 'Mật khẩu phải có độ dài tối thiểu 6 ký tự',
+      password: 'Mật khẩu phải có độ dài tối thiểu 10 ký tự',
     });
     toast.info('Đã bật chế độ hiển thị mẫu lỗi xác thực form');
   };
@@ -189,14 +202,14 @@ export default function UsersPage() {
     }
     if (modalState.mode === 'create' && !formData.password) {
       errors.password = 'Mật khẩu bắt buộc đối với tài khoản mới';
-    } else if (formData.password && formData.password.length < 6) {
-      errors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    } else if (formData.password && formData.password.length < 10) {
+      errors.password = 'Mật khẩu phải có ít nhất 10 ký tự';
     }
     return errors;
   };
 
   // Submit form Thêm / Sửa
-  const handleSubmitForm = (e) => {
+  const handleSubmitForm = async (e) => {
     e?.preventDefault();
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
@@ -205,30 +218,11 @@ export default function UsersPage() {
       return;
     }
 
-    if (modalState.mode === 'create') {
-      // TODO: nối API - POST /api/admin/users
-      const newUser = {
-        id: `USR${String(users.length + 1).padStart(3, '0')}`,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        role: formData.role,
-        status: formData.status,
-        avatar: formData.avatar || null,
-        gender: 'Chưa cập nhật',
-        dob: '01/01/2000',
-        address: 'Hà Nội, Việt Nam',
-        createdAt: new Date().toLocaleDateString('vi-VN'),
-        lastLogin: 'Chưa đăng nhập',
-        lastLoginIp: '127.0.0.1',
-        authProvider: 'Email/Password',
-        note: 'Tài khoản được tạo thủ công bởi Quản trị viên',
-        classes: [],
-        orders: [],
-      };
-      setUsers([newUser, ...users]);
-      toast.success(`Đã thêm thành công người dùng "${formData.name}"`);
-    } else {
+    try {
+      if (modalState.mode === 'create') {
+        await userService.createUser(formData);
+        toast.success(`Đã thêm thành công người dùng "${formData.name}"`);
+      } else {
       // Sửa người dùng
       // Kiểm tra an toàn: Không thể hạ quyền admin cuối cùng
       const currentAdminCount = users.filter((u) => u.role === 'admin').length;
@@ -241,23 +235,23 @@ export default function UsersPage() {
         return;
       }
 
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === modalState.data.id
-            ? { ...u, ...formData }
-            : u
-        )
-      );
-      toast.success(`Đã cập nhật thông tin "${formData.name}"`);
+        await userService.updateUser(modalState.data.id, formData);
+        toast.success(`Đã cập nhật thông tin "${formData.name}"`);
+      }
+      await loadUsers();
+    } catch (error) {
+      toast.error(error.message || 'Không lưu được người dùng.');
+      return;
     }
 
     setModalState({ isOpen: false, mode: 'create', data: null });
   };
 
   // Xử lý xác nhận Khóa / Mở khóa / Xóa
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     const { action, user } = confirmDialog;
 
+    try {
     if (action === 'delete') {
       // Kiểm tra an toàn: Không thể xóa quản trị viên cuối cùng
       if (user?.role === 'admin') {
@@ -268,7 +262,7 @@ export default function UsersPage() {
           return;
         }
       }
-      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+      await userService.deleteUser(user.id);
       toast.success(`Đã xóa người dùng "${user.name}"`);
     } else if (action === 'ban') {
       if (user?.role === 'admin') {
@@ -279,19 +273,13 @@ export default function UsersPage() {
           return;
         }
       }
-      setUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, status: 'banned' } : u))
-      );
+      await userService.updateUserStatus(user.id, 'banned');
       toast.success(`Đã khóa tài khoản "${user.name}"`);
     } else if (action === 'unlock') {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, status: 'active' } : u))
-      );
+      await userService.updateUserStatus(user.id, 'active');
       toast.success(`Đã mở khóa tài khoản "${user.name}"`);
     } else if (action === 'bulk_ban') {
-      setUsers((prev) =>
-        prev.map((u) => (selectedIds.includes(u.id) ? { ...u, status: 'banned' } : u))
-      );
+      await userService.bulkAction(selectedIds, 'ban');
       toast.success(`Đã khóa ${selectedIds.length} người dùng đã chọn`);
       setSelectedIds([]);
     } else if (action === 'bulk_delete') {
@@ -302,11 +290,13 @@ export default function UsersPage() {
         setConfirmDialog({ isOpen: false, user: null, action: '' });
         return;
       }
-      setUsers((prev) => prev.filter((u) => !selectedIds.includes(u.id)));
+      await userService.bulkAction(selectedIds, 'delete');
       toast.success(`Đã xóa ${selectedIds.length} người dùng khỏi hệ thống`);
       setSelectedIds([]);
     }
 
+    await loadUsers();
+    } catch (error) { toast.error(error.message || 'Không thực hiện được thao tác.'); }
     setConfirmDialog({ isOpen: false, user: null, action: '' });
   };
 
@@ -563,6 +553,7 @@ export default function UsersPage() {
       <Table
         columns={columns}
         data={filteredUsers}
+        loading={isLoading}
         selectable
         selectedIds={selectedIds}
         onSelectChange={setSelectedIds}

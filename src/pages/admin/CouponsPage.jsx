@@ -1,5 +1,5 @@
 // src/pages/admin/CouponsPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Tag, Plus, Edit2, Trash2, Copy
 } from 'lucide-react';
@@ -13,7 +13,7 @@ import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import { useToastContext } from '../../contexts/ToastContext';
-import { mockCouponsList } from '../../mock/business';
+import { couponService, courseService } from '../../services/adminService';
 
 // TODO: nối API
 // - GET /api/admin/coupons (Lấy danh sách mã giảm giá)
@@ -33,19 +33,20 @@ const typeOptions = [
   { value: 'fixed', label: 'Số tiền cố định (₫)' },
 ];
 
-const availableCourses = [
-  'Tất cả khóa học',
-  'TOEIC 650+ Listening & Reading Cấp tốc',
-  'IELTS Speaking Masterclass Band 7.5+',
-  'Luyện thi TOEIC Cấp tốc 30 ngày',
-  'Chuyên đề IELTS Writing Task 1 & 2',
-  'Tiếng Anh Giao tiếp Công sở & Đàm phán',
-  'TOEIC Lấy lại Căn bản cho Người mất gốc',
-];
-
 export default function CouponsPage() {
   const toast = useToastContext();
-  const [coupons, setCoupons] = useState(mockCouponsList);
+  const [coupons, setCoupons] = useState([]);
+  const [courses, setCourses] = useState([]);
+
+  const loadCoupons = async () => {
+    try {
+      const [couponResult, courseResult] = await Promise.all([couponService.list({ page: 1, limit: 100 }), courseService.getCourses({ page: 1, limit: 100 })]);
+      setCourses(courseResult);
+      const formatDateTime = (value) => { const date = new Date(value); const pad = (n) => String(n).padStart(2, '0'); return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`; };
+      setCoupons(couponResult.map((item) => ({ ...item, startDate: formatDateTime(item.startDate), endDate: formatDateTime(item.endDate), applicableCourse: courseResult.find((course) => course.id === item.courseId)?.title || 'Tất cả khóa học' })));
+    } catch (error) { toast.error(error.message || 'Không tải được mã giảm giá.'); }
+  };
+  useEffect(() => { loadCoupons(); }, []);
 
   // Bộ lọc
   const [search, setSearch] = useState('');
@@ -62,7 +63,7 @@ export default function CouponsPage() {
     startDate: '',
     endDate: '',
     maxUsage: '',
-    applicableCourse: 'Tất cả khóa học',
+    applicableCourse: 'all',
     isActive: true,
   });
 
@@ -91,16 +92,9 @@ export default function CouponsPage() {
   }, [coupons, search, typeFilter, statusFilter]);
 
   // Bật/tắt công tắc kích hoạt
-  const handleToggleActive = (couponId, currentStatus) => {
-    // TODO: nối API - PATCH /api/admin/coupons/:id/toggle
-    setCoupons((prev) =>
-      prev.map((c) =>
-        c.id === couponId ? { ...c, isActive: !currentStatus } : c
-      )
-    );
-    toast.success(
-      `Đã ${!currentStatus ? 'kích hoạt' : 'tạm dừng'} mã giảm giá thành công!`
-    );
+  const handleToggleActive = async (couponId, currentStatus) => {
+    try { await couponService.toggle(couponId); toast.success(`Đã ${!currentStatus ? 'kích hoạt' : 'tạm dừng'} mã giảm giá thành công!`); await loadCoupons(); }
+    catch (error) { toast.error(error.message || 'Không đổi được trạng thái mã giảm giá.'); }
   };
 
   // Mở modal tạo mới
@@ -113,7 +107,7 @@ export default function CouponsPage() {
       startDate: '01/10/2026 00:00',
       endDate: '31/12/2026 23:59',
       maxUsage: '',
-      applicableCourse: 'Tất cả khóa học',
+      applicableCourse: 'all',
       isActive: true,
     });
     setIsModalOpen(true);
@@ -129,14 +123,14 @@ export default function CouponsPage() {
       startDate: coupon.startDate,
       endDate: coupon.endDate,
       maxUsage: coupon.maxUsage === null ? '' : coupon.maxUsage.toString(),
-      applicableCourse: coupon.applicableCourse || 'Tất cả khóa học',
+      applicableCourse: coupon.courseId || 'all',
       isActive: coupon.isActive,
     });
     setIsModalOpen(true);
   };
 
   // Lưu mã giảm giá
-  const handleSaveCoupon = (e) => {
+  const handleSaveCoupon = async (e) => {
     e.preventDefault();
     const cleanCode = formData.code.trim().toUpperCase();
 
@@ -159,53 +153,21 @@ export default function CouponsPage() {
     const parsedMaxUsage =
       formData.maxUsage === '' ? null : parseInt(formData.maxUsage, 10);
 
-    if (editingCoupon) {
-      // TODO: nối API - PUT /api/admin/coupons/:id
-      setCoupons((prev) =>
-        prev.map((c) =>
-          c.id === editingCoupon.id
-            ? {
-                ...c,
-                code: cleanCode,
-                type: formData.type,
-                value: numValue,
-                startDate: formData.startDate,
-                endDate: formData.endDate,
-                maxUsage: parsedMaxUsage,
-                applicableCourse: formData.applicableCourse,
-                isActive: formData.isActive,
-              }
-            : c
-        )
-      );
-      toast.success(`Cập nhật mã giảm giá "${cleanCode}" thành công!`);
-    } else {
-      // TODO: nối API - POST /api/admin/coupons
-      const newCoupon = {
-        id: `CPN_${Date.now()}`,
-        code: cleanCode,
-        type: formData.type,
-        value: numValue,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        usedCount: 0,
-        maxUsage: parsedMaxUsage,
-        applicableCourse: formData.applicableCourse,
-        isActive: formData.isActive,
-      };
-      setCoupons((prev) => [newCoupon, ...prev]);
-      toast.success(`Đã tạo mã giảm giá "${cleanCode}" thành công!`);
-    }
+    const payload = { code: cleanCode, type: formData.type, value: numValue, startDate: formData.startDate, endDate: formData.endDate, usageLimit: parsedMaxUsage, courseId: formData.applicableCourse === 'all' || formData.applicableCourse === 'Tất cả khóa học' ? null : formData.applicableCourse, isActive: formData.isActive };
+    try {
+      if (editingCoupon) { await couponService.update(editingCoupon.id, payload); toast.success(`Cập nhật mã giảm giá "${cleanCode}" thành công!`); }
+      else { await couponService.create(payload); toast.success(`Đã tạo mã giảm giá "${cleanCode}" thành công!`); }
+      await loadCoupons();
+    } catch (error) { toast.error(error.message || 'Không lưu được mã giảm giá.'); return; }
 
     setIsModalOpen(false);
   };
 
   // Xác nhận xóa mã
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
-    // TODO: nối API - DELETE /api/admin/coupons/:id
-    setCoupons((prev) => prev.filter((c) => c.id !== deleteTarget.id));
-    toast.success(`Đã xóa mã giảm giá "${deleteTarget.code}"!`);
+    try { await couponService.remove(deleteTarget.id); toast.success(`Đã xóa mã giảm giá "${deleteTarget.code}"!`); await loadCoupons(); }
+    catch (error) { toast.error(error.message || 'Không xóa được mã giảm giá.'); }
     setDeleteTarget(null);
   };
 
@@ -607,7 +569,7 @@ export default function CouponsPage() {
               onChange={(e) =>
                 setFormData({ ...formData, applicableCourse: e.target.value })
               }
-              options={availableCourses.map((c) => ({ value: c, label: c }))}
+              options={[{ value: 'all', label: 'Tất cả khóa học' }, ...courses.map((course) => ({ value: course.id, label: course.title }))]}
             />
           </div>
 
