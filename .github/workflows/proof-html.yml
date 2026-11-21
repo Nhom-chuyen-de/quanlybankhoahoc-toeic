@@ -1,11 +1,10 @@
-name: Proof HTML
+# Workflow này đã được thay thế bởi deploy.yml
+# Giữ file rỗng để tránh conflict với lịch sử git
+name: Disabled - Replaced by deploy.yml
 on:
-  push:
   workflow_dispatch:
 jobs:
-  build:
+  skip:
     runs-on: ubuntu-latest
     steps:
-      - uses: anishathalye/proof-html@v1.1.0
-        with:
-          directory: ./
+      - run: echo "Workflow này đã bị vô hiệu hóa. Xem deploy.yml thay thế."
