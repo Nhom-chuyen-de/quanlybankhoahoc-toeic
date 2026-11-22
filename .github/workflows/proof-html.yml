@@ -1,0 +1,10 @@
+# Workflow này đã được thay thế bởi deploy.yml
+# Giữ file rỗng để tránh conflict với lịch sử git
+name: Disabled - Replaced by deploy.yml
+on:
+  workflow_dispatch:
+jobs:
+  skip:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Workflow này đã bị vô hiệu hóa. Xem deploy.yml thay thế."
