@@ -30,7 +30,7 @@ export default function Sidebar({ collapsed, onToggle }) {
     >
       {/* Logo */}
       <div className={`flex items-center gap-3 px-4 py-5 border-b border-gray-200 dark:border-gray-700 ${collapsed ? 'justify-center' : ''}`}>
-        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 bg-linear-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shrink-0">
           <Logo className="h-5 w-5 text-white" />
         </div>
         {!collapsed && (
@@ -124,7 +124,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       {!collapsed && (
         <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            <div className="w-7 h-7 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
               N
             </div>
             <div className="overflow-hidden">
