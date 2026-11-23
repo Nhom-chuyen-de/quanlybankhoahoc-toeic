@@ -2,9 +2,8 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, School, Users, Calendar, Clock, MapPin, Link2,
-  UserPlus, UserMinus, Check, AlertCircle, Pencil, BookOpen,
-  ShieldCheck
+  ArrowLeft, School, Users, MapPin, Link2,
+  UserPlus, UserMinus, Pencil,
 } from 'lucide-react';
 import PageHeader from '../../components/shared/PageHeader';
 import Card from '../../components/ui/Card';

@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { ROLES } from '../constants/roles';
 
 const AuthContext = createContext(null);
@@ -34,8 +34,16 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('auth_user');
   };
 
+  const updateUser = (updates) => {
+    setUser((currentUser) => {
+      const nextUser = { ...currentUser, ...updates };
+      localStorage.setItem('auth_user', JSON.stringify(nextUser));
+      return nextUser;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

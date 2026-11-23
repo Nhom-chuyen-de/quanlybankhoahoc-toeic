@@ -2,12 +2,12 @@
 import { useState } from 'react';
 import {
   Users, BookOpen, TrendingUp, HelpCircle,
-  ArrowUpRight, Check, X, Clock, AlertTriangle,
-  ChevronRight, ShoppingCart, FileCheck, LifeBuoy
+  ArrowUpRight, Check, X, Clock,
+  ShoppingCart, FileCheck, LifeBuoy
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import PageHeader from '../../components/shared/PageHeader';
 import StatCard from '../../components/shared/StatCard';
@@ -93,6 +93,7 @@ const EnrollmentTooltip = ({ active, payload, label }) => {
 export default function DashboardPage() {
   const toast = useToastContext();
   const [reviews, setReviews] = useState(mockPendingReviews);
+  const [updatedAt] = useState(() => new Date().toLocaleDateString('vi-VN'));
 
   const handleApproveReview = (id, title) => {
     // TODO: nối API - POST /api/admin/reviews/:id/approve
@@ -114,7 +115,7 @@ export default function DashboardPage() {
         actions={
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-lg shadow-sm">
-              Cập nhật lúc: <strong>{new Date().toLocaleDateString('vi-VN')}</strong>
+              Cập nhật lúc: <strong>{updatedAt}</strong>
             </span>
             <Button size="sm" variant="secondary" onClick={() => toast.success('Dữ liệu đã được làm mới')}>
               Làm mới
