@@ -10,7 +10,7 @@ import {
   PhoneCall, Mail, Sun, Moon, CreditCard, ChevronDown, Flame
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { ROLE_HOME } from '../../constants/roles';
+import { ROLES, ROLE_HOME } from '../../constants/roles';
 
 // ==========================================
 // DỮ LIỆU CÁC KHÓA HỌC ĐANG MỞ BÁN
@@ -195,6 +195,18 @@ const STORE_COURSES = [
 export default function CourseStorePage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const [teacherWarningModal, setTeacherWarningModal] = useState(false);
+
+  // Yêu cầu 4: Không cho Giảng viên vào trang bán khóa học & mua khóa học
+  useEffect(() => {
+    if (isAuthenticated && user?.vaiTro === ROLES.TEACHER) {
+      setTeacherWarningModal(true);
+      const timer = setTimeout(() => {
+        navigate('/giang-vien', { replace: true });
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, user, navigate]);
 
   // Điều hướng vào đúng tài khoản học tập: chưa đăng nhập thì bắt buộc vào /login
   const handleGoToLearning = () => {
@@ -247,6 +259,12 @@ export default function CourseStorePage() {
 
   const handleAddToCart = (course, e) => {
     if (e) e.stopPropagation();
+    // Yêu cầu 4: Chỉ học viên mới được quyền mua khóa học
+    if (isAuthenticated && user?.vaiTro === ROLES.TEACHER) {
+      alert('Tài khoản Giảng viên không được phép mua khóa học. Vui lòng đăng nhập tài khoản Học viên!');
+      navigate('/giang-vien');
+      return;
+    }
     if (!cart.some((item) => item.id === course.id)) {
       setCart([...cart, course]);
     }
@@ -259,6 +277,12 @@ export default function CourseStorePage() {
 
   const handleBuyNow = (course, e) => {
     if (e) e.stopPropagation();
+    // Yêu cầu 4: Chỉ học viên mới được quyền mua khóa học
+    if (isAuthenticated && user?.vaiTro === ROLES.TEACHER) {
+      alert('Tài khoản Giảng viên không được phép mua khóa học. Vui lòng đăng nhập tài khoản Học viên!');
+      navigate('/giang-vien');
+      return;
+    }
     if (!cart.some((item) => item.id === course.id)) {
       setCart([...cart, course]);
     }
@@ -397,6 +421,12 @@ export default function CourseStorePage() {
       {/* ======================================================== */}
       <section className="bg-gradient-to-br from-indigo-900 via-indigo-700 to-blue-600 text-white py-6 sm:py-8 lg:py-10 px-3 sm:px-6 lg:px-8 relative overflow-hidden shadow-inner">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.12),transparent_60%)]" />
+        <img
+          src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=70"
+          alt=""
+          aria-hidden="true"
+          className="absolute right-0 bottom-0 w-[38%] h-full object-cover object-center opacity-10 mix-blend-overlay pointer-events-none"
+        />
         
         <div className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
           
@@ -864,7 +894,19 @@ export default function CourseStorePage() {
                 </div>
 
                 <button
-                  onClick={() => setCheckoutSuccess(true)}
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      alert('Vui lòng đăng nhập tài khoản Học Viên để tiến hành thanh toán khóa học!');
+                      navigate('/login');
+                      return;
+                    }
+                    if (user?.vaiTro === ROLES.TEACHER) {
+                      alert('Tài khoản Giảng viên không được phép đăng ký khóa học! Chỉ tài khoản Học viên mới có quyền mua khóa học.');
+                      navigate('/giang-vien');
+                      return;
+                    }
+                    setCheckoutSuccess(true);
+                  }}
                   className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2"
                 >
                   <CreditCard className="w-4 h-4" />
@@ -872,6 +914,27 @@ export default function CourseStorePage() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal cảnh báo quyền hạn đối với Giảng Viên */}
+      {teacherWarningModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl">
+            <div className="w-14 h-14 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center mx-auto">
+              <Shield className="w-7 h-7" />
+            </div>
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Không Có Quyền Mua Khóa Học</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Bạn đang đăng nhập bằng <strong>Tài khoản Giảng Viên</strong>. Trang bán khóa học chỉ dành riêng cho Học viên đăng ký và thanh toán. Đang tự động chuyển bạn về cổng Giảng Viên...
+            </p>
+            <button
+              onClick={() => navigate('/giang-vien')}
+              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm"
+            >
+              Về Cổng Giảng Viên Ngay
+            </button>
           </div>
         </div>
       )}

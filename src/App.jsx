@@ -21,8 +21,8 @@ function PageLoader() {
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const StudentHomePage = lazy(() => import('./pages/student/StudentHomePage'));
+const StudentSupportPage = lazy(() => import('./pages/student/StudentSupportPage'));
 const TeacherDashboardPage = lazy(() => import('./pages/teacher/TeacherDashboardPage'));
-const UserPortalPage = lazy(() => import('./pages/portal/UserPortalPage'));
 const CourseStorePage = lazy(() => import('./pages/store/CourseStorePage'));
 
 // Admin Pages (Tải động khi người dùng điều hướng, không làm phình bundle ban đầu)
@@ -72,6 +72,7 @@ export default function App() {
             {/* Cổng học viên: Bắt buộc đăng nhập & Chỉ dành cho Học Viên */}
             <Route element={<ProtectedRoute allowedRoles={[ROLES.STUDENT]} />}>
               <Route path="/hoc-vien" element={<StudentHomePage />} />
+              <Route path="/ho-tro" element={<StudentSupportPage />} />
             </Route>
 
             {/* Cổng giảng viên: Bắt buộc đăng nhập & Chỉ dành cho Giảng Viên */}
@@ -82,9 +83,11 @@ export default function App() {
             {/* Route điều hướng thông minh theo vai trò */}
             <Route path="/portal" element={<PortalRedirect />} />
 
-            {/* Cửa hàng & Trang bán khóa học TOEIC Master (Công khai, nhưng nút Vào học bắt buộc auth) */}
-            <Route path="/store" element={<CourseStorePage />} />
-            <Route path="/khoa-hoc" element={<CourseStorePage />} />
+            {/* Cửa hàng & Trang bán khóa học chỉ dành cho tài khoản học viên */}
+            <Route element={<ProtectedRoute allowedRoles={[ROLES.STUDENT]} />}>
+              <Route path="/store" element={<CourseStorePage />} />
+              <Route path="/khoa-hoc" element={<CourseStorePage />} />
+            </Route>
             <Route path="/cua-hang" element={<Navigate to="/store" replace />} />
 
             {/* Khu vực quản trị Admin - bọc ProtectedRoute */}

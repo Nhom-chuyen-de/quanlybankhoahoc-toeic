@@ -7,9 +7,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   BookOpen, Award, GraduationCap, Calendar, CheckSquare, Clock, FileText,
   Upload, Video, Headphones, Mic, Star, ShoppingCart, CreditCard, ChevronRight,
-  ChevronDown, CheckCircle, XCircle, AlertCircle, Search, Filter, Download,
+  ChevronDown, CheckCircle, XCircle, AlertCircle, Download,
   MessageSquare, User, LogOut, Moon, Sun, ArrowRight, Play, Pause,
-  Send, Layers, Eye, Edit3, Plus, Check, ExternalLink, Menu, X, ArrowLeft
+  Send, Layers, Eye, Edit3, Pencil, Plus, Check, ExternalLink, Menu, X, ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ROLES } from '../../constants/roles';
@@ -36,15 +36,84 @@ const MOCK_DATA = {
       { id: 'c3', name: 'Lớp Chữa Đề Listening Part 3 & 4', code: 'LIS-PART-09', time: '18:00 - 20:00 Ngày mai', room: 'Phòng P.201 (Offline)', students: 28, type: 'offline' },
     ],
     pendingSubmissions: [
-      { id: 'sub1', studentName: 'Trần Bảo Ngọc', studentCode: 'HV-9021', examTitle: 'Speaking Part 2 - Describe a Picture', classCode: 'TOEIC-K28-T246', type: 'audio', submittedAt: '10 phút trước', deadline: '23:59 Hôm nay' },
-      { id: 'sub2', studentName: 'Lê Hoàng Long', studentCode: 'HV-8842', examTitle: 'Writing Part 2 - Respond to a Request', classCode: 'ETS-K15-T357', type: 'text', submittedAt: '45 phút trước', deadline: '23:59 Hôm nay' },
-      { id: 'sub3', studentName: 'Vũ Minh Anh', studentCode: 'HV-7619', examTitle: 'Quiz Kiểm tra từ vựng Business Collocations', classCode: 'TOEIC-K28-T246', type: 'quiz', submittedAt: '2 giờ trước', deadline: 'Hôm qua' },
+      {
+        id: 'sub1',
+        studentName: 'Trần Bảo Ngọc',
+        studentCode: 'HV-9021',
+        examTitle: 'Speaking Part 2 - Describe a Picture',
+        classCode: 'TOEIC-K28-T246',
+        type: 'audio',
+        submittedAt: '10 phút trước',
+        deadline: '23:59 Hôm nay',
+        completionRate: 100,
+        duration: '42 phút 15 giây',
+        correctAnswers: 'N/A (Tự luận nói)',
+        toeicScore: '160/200 SW',
+        status: 'pending',
+        gradeScore: '',
+        feedback: '',
+        transcript: 'In this picture, I can see a group of colleagues having a business meeting around a modern conference table. One woman is presenting financial charts on a projector screen while others are taking notes attentively.'
+      },
+      {
+        id: 'sub2',
+        studentName: 'Lê Hoàng Long',
+        studentCode: 'HV-8842',
+        examTitle: 'Writing Part 2 - Respond to a Request',
+        classCode: 'ETS-K15-T357',
+        type: 'text',
+        submittedAt: '45 phút trước',
+        deadline: '23:59 Hôm nay',
+        completionRate: 95,
+        duration: '35 phút 20 giây',
+        correctAnswers: 'N/A (Tự luận viết)',
+        toeicScore: '170/200 SW',
+        status: 'pending',
+        gradeScore: '',
+        feedback: '',
+        content: 'Dear Mr. Henderson,\n\nThank you for reaching out regarding the upcoming Regional Sales Conference. I am pleased to confirm our company reservation for 5 attendees.\n\nCould you please provide the detailed agenda and verify if vegetarian catering options are available?\n\nSincerely,\nLe Hoang Long'
+      },
+      {
+        id: 'sub3',
+        studentName: 'Vũ Minh Anh',
+        studentCode: 'HV-7619',
+        examTitle: 'Mini-Test Ngữ Pháp & Từ Vựng Part 5 & 6',
+        classCode: 'TOEIC-K28-T246',
+        type: 'quiz',
+        submittedAt: '2 giờ trước',
+        deadline: 'Hôm qua',
+        completionRate: 100,
+        duration: '28 phút 40 giây',
+        correctAnswers: '28/30',
+        toeicScore: '880/990 TOEIC',
+        status: 'graded',
+        gradeScore: '93/100',
+        feedback: 'Bài làm xuất sắc! Cần lưu ý phân biệt liên từ chỉ nguyên nhân (due to + Noun Phrase vs because + Clause).'
+      },
+      {
+        id: 'sub4',
+        studentName: 'Nguyễn Thúy Hằng',
+        studentCode: 'HV-9023',
+        examTitle: 'ETS Actual Test 2024 - Full Mock Test (LC + RC)',
+        classCode: 'ETS-K15-T357',
+        type: 'quiz',
+        submittedAt: 'Hôm qua',
+        deadline: '23:59 20/11/2026',
+        completionRate: 88,
+        duration: '115 phút 00 giây',
+        correctAnswers: '176/200',
+        toeicScore: '815/990 TOEIC',
+        status: 'graded',
+        gradeScore: '88/100',
+        feedback: 'Listening Part 3 & 4 bứt phá tốt. Reading Part 7 cần đẩy nhanh tốc độ quét từ khóa để kịp giờ làm 2 đoạn đọc ba cuối.'
+      }
     ],
     courses: [
       {
         id: 'CRS-01',
         title: 'TOEIC Bứt Phá 750+ Toàn Diện 4 Kỹ Năng',
         level: '750+ Target',
+        price: 2890000,
+        description: 'Khóa học trang bị đầy đủ chiến lược xử lý bẫy nghe Part 1-4, phương pháp Skimming & Scanning bài đọc Part 7 và kỹ năng phản xạ Speaking - Writing thương mại.',
         chaptersCount: 12,
         lessonsCount: 48,
         status: 'da duyet',
@@ -52,16 +121,53 @@ const MOCK_DATA = {
         studentsCount: 342,
         rating: 4.9,
         chapters: [
-          { id: 'ch1', title: 'Chương 1: Chiến thuật xử lý bẫy Listening Part 1 & 2', duration: '4 bài • 120 phút' },
-          { id: 'ch2', title: 'Chương 2: Phân tích biểu đồ và hội thoại 3 người Part 3', duration: '5 bài • 150 phút' },
-          { id: 'ch3', title: 'Chương 3: Cấu trúc ngữ pháp trọng điểm Part 5 & 6', duration: '6 bài • 180 phút' },
-          { id: 'ch4', title: 'Chương 4: Kỹ năng Skimming & Scanning bài đọc Part 7', duration: '7 bài • 210 phút' },
+          {
+            id: 'ch1',
+            title: 'Chương 1: Chiến thuật xử lý bẫy Listening Part 1 & 2',
+            duration: '4 bài • 120 phút',
+            lessons: [
+              { id: 'l1', title: 'Bài 1: Phân tích tranh miêu tả hành động người & bẫy chủ thể', type: 'video', duration: 30, resource: 'Video MP4 (1080p)' },
+              { id: 'l2', title: 'Bài 2: Bẫy tranh vật và thì bị động hiện tại tiếp diễn Being + V3/ed', type: 'video', duration: 25, resource: 'Video MP4 (1080p)' },
+              { id: 'l3', title: 'Bài 3: Bộ Slide 120 từ vựng cốt lõi mô tả tranh thường gặp', type: 'slide', duration: 20, resource: 'Slide PDF (Full HD)' },
+              { id: 'l4', title: 'Bài 4: Luyện tập 50 câu hỏi gián tiếp và câu trả lời bất ngờ Part 2', type: 'quiz', duration: 45, resource: 'ETS Practice Quiz' },
+            ]
+          },
+          {
+            id: 'ch2',
+            title: 'Chương 2: Phân tích biểu đồ và hội thoại 3 người Part 3',
+            duration: '5 bài • 150 phút',
+            lessons: [
+              { id: 'l5', title: 'Bài 1: Kỹ năng đọc trước câu hỏi và dự đoán ngữ cảnh 8 giây vàng', type: 'video', duration: 35, resource: 'Video MP4' },
+              { id: 'l6', title: 'Bài 2: Chiến lược bẻ khóa dạng bài đồ thị biểu đồ và bản đồ', type: 'slide', duration: 25, resource: 'Slide PDF' },
+              { id: 'l7', title: 'Bài 3: Thực hành nghe hội thoại 3 người có giọng Anh - Úc', type: 'audio', duration: 40, resource: 'Audio MP3' },
+            ]
+          },
+          {
+            id: 'ch3',
+            title: 'Chương 3: Cấu trúc ngữ pháp trọng điểm Part 5 & 6',
+            duration: '6 bài • 180 phút',
+            lessons: [
+              { id: 'l8', title: 'Bài 1: 10 bẫy cấu trúc mệnh đề quan hệ rút gọn', type: 'video', duration: 35, resource: 'Video MP4' },
+              { id: 'l9', title: 'Bài 2: Tổng hợp liên từ và giới từ dễ nhầm lẫn trong hợp đồng kinh tế', type: 'slide', duration: 30, resource: 'Slide PDF' },
+            ]
+          },
+          {
+            id: 'ch4',
+            title: 'Chương 4: Kỹ năng Skimming & Scanning bài đọc Part 7',
+            duration: '7 bài • 210 phút',
+            lessons: [
+              { id: 'l10', title: 'Bài 1: Phương pháp đọc dò thông tin đoạn đơn trong 45 giây', type: 'video', duration: 40, resource: 'Video MP4' },
+              { id: 'l11', title: 'Bài 2: Xử lý bài đọc kép và bài đọc ba liên hoàn Part 7', type: 'video', duration: 45, resource: 'Video MP4' },
+            ]
+          },
         ]
       },
       {
         id: 'CRS-02',
         title: 'Luyện Đề ETS 2024 & Giải Đề Thi Thật',
         level: 'Luyện Đề 600-800',
+        price: 1950000,
+        description: 'Giải chi tiết 10 đề thi thật ETS mới nhất, phân tích mọi bẫy từ vựng đồng âm, ngữ pháp nâng cao và kỹ năng phân bổ thời gian 120 phút.',
         chaptersCount: 10,
         lessonsCount: 30,
         status: 'cho duyet',
@@ -69,14 +175,31 @@ const MOCK_DATA = {
         studentsCount: 0,
         rating: 0,
         chapters: [
-          { id: 'ch21', title: 'Test 01: Full Actual Test ETS 2024 RC & LC', duration: '2 bài • 120 phút' },
-          { id: 'ch22', title: 'Test 02: Phân tích chuyên sâu bẫy từ vựng đồng âm', duration: '3 bài • 90 phút' },
+          {
+            id: 'ch21',
+            title: 'Test 01: Full Actual Test ETS 2024 RC & LC',
+            duration: '2 bài • 120 phút',
+            lessons: [
+              { id: 'l201', title: 'Bài 1: Thực chiến 100 câu Listening Full Test 01', type: 'audio', duration: 45, resource: 'Audio ETS 2024' },
+              { id: 'l202', title: 'Bài 2: Giải chi tiết 100 câu Reading Test 01 kèm bẫy từ vựng', type: 'video', duration: 75, resource: 'Video MP4' }
+            ]
+          },
+          {
+            id: 'ch22',
+            title: 'Test 02: Phân tích chuyên sâu bẫy từ vựng đồng âm',
+            duration: '3 bài • 90 phút',
+            lessons: [
+              { id: 'l203', title: 'Bài 1: 50 cặp từ đồng âm gây mất điểm Part 1 & 2', type: 'slide', duration: 30, resource: 'Slide PDF' }
+            ]
+          },
         ]
       },
       {
         id: 'CRS-03',
         title: 'Chinh Phục TOEIC Speaking & Writing Tự Tin',
         level: 'SW 300+',
+        price: 3200000,
+        description: 'Khóa học chuyên sâu rèn luyện phát âm chuẩn, cấu trúc trả lời Speaking 3 bước và kỹ năng viết Email, Essay thương mại chuẩn quốc tế.',
         chaptersCount: 8,
         lessonsCount: 24,
         status: 'tu choi',
@@ -85,7 +208,14 @@ const MOCK_DATA = {
         studentsCount: 0,
         rating: 0,
         chapters: [
-          { id: 'ch31', title: 'Chương 1: Phát âm và ngữ điệu câu hỏi đuôi', duration: '3 bài • 60 phút' },
+          {
+            id: 'ch31',
+            title: 'Chương 1: Phát âm và ngữ điệu câu hỏi đuôi',
+            duration: '3 bài • 60 phút',
+            lessons: [
+              { id: 'l301', title: 'Bài 1: Luyện ngữ điệu lên xuống và nối âm tự nhiên', type: 'video', duration: 25, resource: 'Video MP4' }
+            ]
+          },
         ]
       }
     ],
@@ -145,53 +275,6 @@ const MOCK_DATA = {
     enrolledClasses: [
       { id: 'cls1', name: 'Lớp TOEIC Cấp Tốc 750+ (K28)', teacher: 'ThS. Nguyễn Minh Quân', schedule: 'T2 - T4 - T6 (18:00 - 20:00)', room: 'P.402 (Offline)', attendanceRate: 92 },
     ],
-    catalogCourses: [
-      {
-        id: 'CAT-01',
-        title: 'Khóa TOEIC Nền Tảng Cho Người Mất Gốc (0 - 450+)',
-        teacher: 'Thầy Lê Hoàng Nam',
-        level: 'Cơ bản (0-450)',
-        exam: 'TOEIC 2 Kỹ Năng',
-        format: 'Video kèm Mentor',
-        price: 1450000,
-        originalPrice: 2200000,
-        rating: 4.8,
-        reviewsCount: 420,
-        lessonsCount: 36,
-        description: 'Lấy lại toàn bộ ngữ pháp căn bản, mẹo nghe phân biệt âm đuôi và 600 từ vựng cốt lõi thường xuất hiện trong đề thi TOEIC.',
-        syllabus: ['Ngữ âm nền tảng IPA', '8 Chủ điểm ngữ pháp sống còn', 'Giải mã Part 1 & Part 2', 'Luyện kỹ thuật đọc lướt Part 5']
-      },
-      {
-        id: 'CAT-02',
-        title: 'TOEIC Chuyên Sâu Mục Tiêu 750+ / 850+ Điểm Cao',
-        teacher: 'ThS. Nguyễn Minh Quân (985 TOEIC)',
-        level: 'Nâng cao (650+)',
-        exam: 'TOEIC 2 Kỹ Năng',
-        format: 'Lớp Trực Tuyến Tương Tác',
-        price: 2890000,
-        originalPrice: 4200000,
-        rating: 4.95,
-        reviewsCount: 890,
-        lessonsCount: 48,
-        description: 'Tập trung bẻ bẫy hội thoại Part 3 & 4, tối ưu tốc độ đọc Part 7 kép/ba, nắm chắc 900+ từ vựng Business cao cấp.',
-        syllabus: ['Bẻ khóa bẫy gián tiếp Part 2 & 3', 'Phân tích bảng biểu Part 3 & 4', 'Tốc độ đọc Scanning 60s/đoạn Part 7', 'Thực chiến 10 đề ETS mới nhất']
-      },
-      {
-        id: 'CAT-03',
-        title: 'Chiến Binh TOEIC Speaking & Writing 300+ / 400',
-        teacher: 'Cô Emma Vũ (IELTS 8.5 / TOEIC 990)',
-        level: 'Mọi trình độ',
-        exam: 'TOEIC 4 Kỹ Năng',
-        format: 'Lớp Chấm Bài 1-1',
-        price: 3200000,
-        originalPrice: 4500000,
-        rating: 4.9,
-        reviewsCount: 310,
-        lessonsCount: 30,
-        description: 'Rèn luyện ngữ điệu chuẩn tự nhiên, cấu trúc trả lời 3 bước cho Part 1 - Part 5 Speaking và mẫu viết Email thương mại Part 2 Writing.',
-        syllabus: ['Phát âm nhấn trọng âm và ngữ điệu', 'Mô tả hình ảnh chuẩn bố cục', 'Trả lời phỏng vấn & đề xuất giải pháp', 'Viết luận thể hiện quan điểm Part 3']
-      }
-    ],
     certificates: [
       {
         id: 'CERT-2026-9024',
@@ -215,23 +298,19 @@ const MOCK_DATA = {
 
 const TEACHER_NAV_ITEMS = [
   { id: 'dashboard', label: 'Tổng quan', shortLabel: 'Tổng quan', icon: Layers },
-  { id: 'courses', label: 'Khóa học & Biên soạn', shortLabel: 'Khóa học', icon: BookOpen },
-  { id: 'classes', label: 'Quản lý Lớp học', shortLabel: 'Lớp học', icon: GraduationCap },
-  { id: 'grading', label: 'Đề thi & Chấm bài', shortLabel: 'Chấm bài', icon: CheckSquare },
-  { id: 'schedule', label: 'Lịch dạy & Điểm danh', shortLabel: 'Lịch dạy', icon: Calendar },
+  { id: 'courses', label: 'Khóa học & Điểm danh', shortLabel: 'Khóa học', icon: BookOpen },
+  { id: 'grading', label: 'Giao Bài Tập & Chấm Điểm', shortLabel: 'Bài tập & Điểm', icon: CheckSquare },
   { id: 'reports', label: 'Báo cáo & Thống kê', shortLabel: 'Báo cáo', icon: FileText },
-  { id: 'profile', label: 'Hồ sơ & Hỗ trợ Admin', shortLabel: 'Cá nhân', icon: User },
+  { id: 'profile', label: 'Hồ Sơ & Tài Khoản', shortLabel: 'Cá nhân', icon: User },
 ];
 
 const STUDENT_NAV_ITEMS = [
-  { id: 'mylearning', label: 'Góc học tập của tôi', shortLabel: 'Học tập', icon: BookOpen },
-  { id: 'catalog', label: 'Khám phá Khóa học', shortLabel: 'Khám phá', icon: Search },
-  { id: 'checkout', label: 'Giỏ hàng & Thanh toán', shortLabel: 'Thanh toán', icon: ShoppingCart },
-  { id: 'player', label: 'Trình phát Bài học', shortLabel: 'Bài học', icon: Video },
-  { id: 'exam', label: 'Phòng thi & Làm bài (ETS)', shortLabel: 'Phòng thi', icon: Clock },
-  { id: 'schedule', label: 'Lịch học & Điểm danh', shortLabel: 'Thời khóa biểu', icon: Calendar },
+  { id: 'learning', label: 'Góc học tập & Lịch học', shortLabel: 'Học tập', icon: BookOpen },
+  { id: 'commerce', label: 'Thanh toán & Lịch sử', shortLabel: 'Giao dịch', icon: CreditCard },
+  { id: 'practice', label: 'Học bài & Phòng thi ETS', shortLabel: 'Học & Thi', icon: BookOpen },
+  { id: 'support', href: '/ho-tro', label: 'Hỗ trợ', shortLabel: 'Hỗ trợ', icon: MessageSquare },
   { id: 'certificates', label: 'Chứng chỉ & Đánh giá', shortLabel: 'Chứng chỉ', icon: Award },
-  { id: 'history', label: 'Lịch sử & Hỗ trợ', shortLabel: 'Lịch sử', icon: CreditCard },
+  { id: 'profile', label: 'Hồ Sơ & Đổi Mật Khẩu', shortLabel: 'Hồ sơ', icon: User },
 ];
 
 // ==========================================
@@ -251,7 +330,10 @@ export default function UserPortalPage({ defaultRole = 'teacher' }) {
       : (location.pathname.includes('giang-vien') ? 'teacher' : (location.pathname.includes('hoc-vien') ? 'student' : defaultRole)));
 
   const [teacherTab, setTeacherTab] = useState('dashboard');
-  const [studentTab, setStudentTab] = useState('mylearning');
+  const [studentTab, setStudentTab] = useState('learning');
+  const [studentHomeTab, setStudentHomeTab] = useState('overview');
+  const [studentCommerceTab, setStudentCommerceTab] = useState('checkout');
+  const [studentPracticeTab, setStudentPracticeTab] = useState('player');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dark mode
@@ -275,9 +357,34 @@ export default function UserPortalPage({ defaultRole = 'teacher' }) {
   const navItems = role === 'teacher' ? TEACHER_NAV_ITEMS : STUDENT_NAV_ITEMS;
   const currentTab = role === 'teacher' ? teacherTab : studentTab;
   const setCurrentTab = role === 'teacher' ? setTeacherTab : setStudentTab;
+  const handleStudentTabChange = (tab) => {
+    if (tab === 'player' || tab === 'exam') {
+      setStudentPracticeTab(tab);
+      setStudentTab('practice');
+      return;
+    }
+    if (tab === 'mylearning' || tab === 'schedule') {
+      setStudentHomeTab(tab === 'schedule' ? 'schedule' : 'overview');
+      setStudentTab('learning');
+      return;
+    }
+    if (tab === 'checkout' || tab === 'history') {
+      setStudentCommerceTab(tab);
+      setStudentTab('commerce');
+      return;
+    }
+    setStudentTab(tab);
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 overflow-x-hidden pb-20 md:pb-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 overflow-x-hidden pb-20 md:pb-6 relative">
+      {/* Background trang trí nghệ thuật chuẩn thiết kế EdTech hiện đại */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-600/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 -right-40 w-96 h-96 bg-emerald-500/10 dark:bg-emerald-600/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 left-1/4 w-96 h-96 bg-blue-500/10 dark:bg-blue-600/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
+      </div>
       
       {/* ======================================================== */}
       {/* 1. HEADER CHÍNH RESPONSIVE                                */}
@@ -314,34 +421,18 @@ export default function UserPortalPage({ defaultRole = 'teacher' }) {
             </div>
           </div>
 
-          {/* Huy hiệu vai trò cố định của tài khoản đăng nhập (Không thể tự chuyển đổi qua lại) */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 shrink-0">
-            {role === 'teacher' ? (
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                <Award className="w-4 h-4 text-emerald-600" />
-                <span className="hidden sm:inline">Tài Khoản Giảng Viên</span>
-                <span className="sm:hidden">Giảng Viên</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-400">
-                <GraduationCap className="w-4 h-4 text-indigo-600" />
-                <span className="hidden sm:inline">Tài Khoản Học Viên</span>
-                <span className="sm:hidden">Học Viên</span>
-              </div>
-            )}
-          </div>
-
           {/* User Profile & Công cụ phải */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            <button
-              onClick={() => navigate('/store')}
-              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-300/60 dark:border-amber-700/60 hover:bg-amber-500/20 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs"
-              title="Đến Cửa Hàng Bán Khóa Học"
-            >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Cửa Hàng Khóa Học</span>
-              <span className="sm:hidden">Store</span>
-            </button>
+            {role === 'student' && (
+              <button
+                onClick={() => navigate('/store')}
+                className="p-2 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-300/60 dark:border-amber-700/60 hover:bg-amber-500/20 transition-colors"
+                title="Đến Cửa Hàng Bán Khóa Học"
+                aria-label="Cửa hàng khóa học"
+              >
+                <ShoppingCart className="w-4 h-4" />
+              </button>
+            )}
 
             <button
               onClick={() => setDarkMode(!darkMode)}
@@ -351,14 +442,19 @@ export default function UserPortalPage({ defaultRole = 'teacher' }) {
               {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
 
-            <div className="hidden sm:flex items-center gap-2">
+            {/* Click avatar để mở nhanh Hồ sơ cá nhân */}
+            <div
+              onClick={() => setCurrentTab('profile')}
+              className="hidden sm:flex items-center gap-2 cursor-pointer p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              title="Xem và chỉnh sửa hồ sơ tài khoản"
+            >
               <img
                 src={role === 'teacher' ? MOCK_DATA.teacher.avatar : MOCK_DATA.student.avatar}
                 alt="Avatar"
                 className="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-500/20"
               />
               <div className="hidden lg:block text-left text-xs">
-                <p className="font-bold text-slate-800 dark:text-slate-200 max-w-[130px] truncate">
+                <p className="font-bold text-slate-800 dark:text-slate-200 max-w-[130px] truncate hover:text-indigo-600 transition-colors">
                   {user?.hoTen || (role === 'teacher' ? MOCK_DATA.teacher.name : MOCK_DATA.student.name)}
                 </p>
                 <p className="text-[10px] text-slate-400">
@@ -384,13 +480,17 @@ export default function UserPortalPage({ defaultRole = 'teacher' }) {
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center gap-1 overflow-x-auto py-1.5 scrollbar-none">
             {navItems.map((item, idx) => {
               const Icon = item.icon;
-              const active = currentTab === item.id;
+              const active = item.href ? location.pathname === item.href : currentTab === item.id;
               const activeClass = role === 'teacher' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-indigo-600 text-white shadow-xs';
               return (
                 <button
                   key={item.id}
                   onClick={() => {
-                    setCurrentTab(item.id);
+                    if (item.href) {
+                      navigate(item.href);
+                    } else {
+                      setCurrentTab(item.id);
+                    }
                     setMobileMenuOpen(false);
                   }}
                   className={`flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
@@ -418,7 +518,11 @@ export default function UserPortalPage({ defaultRole = 'teacher' }) {
                 <button
                   key={item.id}
                   onClick={() => {
-                    setCurrentTab(item.id);
+                    if (item.href) {
+                      navigate(item.href);
+                    } else {
+                      setCurrentTab(item.id);
+                    }
                     setMobileMenuOpen(false);
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
@@ -446,7 +550,16 @@ export default function UserPortalPage({ defaultRole = 'teacher' }) {
         {role === 'teacher' ? (
           <TeacherViews currentTab={teacherTab} setTab={setTeacherTab} />
         ) : (
-          <StudentViews currentTab={studentTab} setTab={setStudentTab} />
+          <StudentViews
+            currentTab={studentTab}
+            setTab={handleStudentTabChange}
+            homeTab={studentHomeTab}
+            setHomeTab={setStudentHomeTab}
+            commerceTab={studentCommerceTab}
+            setCommerceTab={setStudentCommerceTab}
+            practiceTab={studentPracticeTab}
+            setPracticeTab={setStudentPracticeTab}
+          />
         )}
       </main>
 
@@ -500,7 +613,7 @@ function TeacherViews({ currentTab, setTab }) {
     case 'reports':
       return <TeacherReportsView />;
     case 'profile':
-      return <TeacherProfileSupportView />;
+      return <UserProfileEditView role="teacher" />;
     default:
       return <TeacherDashboardView setTab={setTab} />;
   }
@@ -674,191 +787,1052 @@ function TeacherDashboardView({ setTab }) {
   );
 }
 
-// --- 2. Quản lý Khóa học & Biên soạn Nội dung ---
+// --- 2. Quản lý Khóa học & Điểm danh Buổi học (Gộp Chung Theo Yêu Cầu) ---
 function TeacherCoursesView() {
   const [courses, setCourses] = useState(MOCK_DATA.teacher.courses);
   const [selectedCourse, setSelectedCourse] = useState(courses[0]);
+  const [activeSubTab, setActiveSubTab] = useState('curriculum'); // 'curriculum' | 'attendance'
+
+  // State quản lý chương & bài học
   const [isAddingChapter, setIsAddingChapter] = useState(false);
   const [newChapterTitle, setNewChapterTitle] = useState('');
+  const [expandedChapters, setExpandedChapters] = useState({ [selectedCourse.chapters[0]?.id]: true });
+
+  // Modal Thêm Bài Học Mới (+ Bài)
+  const [isAddLessonModalOpen, setIsAddLessonModalOpen] = useState(false);
+  const [selectedChapterForLesson, setSelectedChapterForLesson] = useState(null);
+  const [newLessonForm, setNewLessonForm] = useState({
+    title: '',
+    type: 'video', // 'video' | 'slide' | 'audio' | 'quiz'
+    urlOrFile: '',
+    duration: 30,
+    notes: ''
+  });
+
+  // Modal Chỉnh Sửa Khóa Học
+  const [isEditCourseModalOpen, setIsEditCourseModalOpen] = useState(false);
+  const [courseEditForm, setCourseEditForm] = useState({
+    title: selectedCourse.title,
+    level: selectedCourse.level,
+    price: selectedCourse.price || 2890000,
+    description: selectedCourse.description || ''
+  });
+
+  // Modal Tải Video / Slide
+  const [isUploadMediaModalOpen, setIsUploadMediaModalOpen] = useState(false);
+  const [mediaUploadForm, setMediaUploadForm] = useState({
+    chapterId: selectedCourse.chapters[0]?.id || '',
+    mediaType: 'video',
+    fileTitle: '',
+    externalLink: ''
+  });
   const [uploadProgress, setUploadProgress] = useState(null);
 
+  const [isEditLessonModalOpen, setIsEditLessonModalOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState(null);
+  const [editingLessonForm, setEditingLessonForm] = useState({
+    title: '',
+    type: 'video',
+    resource: '',
+    duration: 30
+  });
+
+  // State Điểm Danh Nhanh Theo Buổi Học
+  const [selectedClassId, setSelectedClassId] = useState('TOEIC-K28-T246');
+  const [selectedSession, setSelectedSession] = useState(1);
+  const [attendanceList, setAttendanceList] = useState([
+    { id: 'st1', code: 'HV-9021', name: 'Trần Bảo Ngọc', status: 'present' },
+    { id: 'st2', code: 'HV-8842', name: 'Lê Hoàng Long', status: 'present' },
+    { id: 'st3', code: 'HV-9023', name: 'Nguyễn Thúy Hằng', status: 'late' },
+    { id: 'st4', code: 'HV-9024', name: 'Hoàng Văn Nam', status: 'present' },
+    { id: 'st5', code: 'HV-9025', name: 'Lê Minh Tuấn', status: 'absent_excused' },
+    { id: 'st6', code: 'HV-7619', name: 'Vũ Minh Anh', status: 'present' },
+  ]);
+  const [attendanceSavedToast, setAttendanceSavedToast] = useState(false);
+
+  // Đồng bộ form khi đổi khóa học chọn
+  useEffect(() => {
+    setCourseEditForm({
+      title: selectedCourse.title,
+      level: selectedCourse.level,
+      price: selectedCourse.price || 2890000,
+      description: selectedCourse.description || ''
+    });
+    setMediaUploadForm(prev => ({
+      ...prev,
+      chapterId: selectedCourse.chapters[0]?.id || ''
+    }));
+  }, [selectedCourse]);
+
+  // Xử lý thêm chương mới
   const handleAddChapter = (e) => {
     e.preventDefault();
     if (!newChapterTitle.trim()) return;
+    const newChapId = 'ch_' + Date.now();
     const newChap = {
-      id: 'ch_' + Date.now(),
-      title: `Chương ${selectedCourse.chapters.length + 1}: ${newChapterTitle}`,
-      duration: '0 bài • 0 phút'
+      id: newChapId,
+      title: `Chương ${selectedCourse.chapters.length + 1}: ${newChapterTitle.trim()}`,
+      duration: '0 bài • 0 phút',
+      lessons: []
     };
-    const updated = { ...selectedCourse, chapters: [...selectedCourse.chapters, newChap] };
+    const updated = {
+      ...selectedCourse,
+      chaptersCount: selectedCourse.chapters.length + 1,
+      chapters: [...selectedCourse.chapters, newChap]
+    };
     setSelectedCourse(updated);
     setCourses(courses.map(c => c.id === updated.id ? updated : c));
     setNewChapterTitle('');
     setIsAddingChapter(false);
+    setExpandedChapters(prev => ({ ...prev, [newChapId]: true }));
   };
 
-  const handleSimulateUpload = () => {
+  // Mở modal thêm bài học cho chương cụ thể
+  const handleOpenAddLessonModal = (chap) => {
+    setSelectedChapterForLesson(chap);
+    setNewLessonForm({
+      title: '',
+      type: 'video',
+      urlOrFile: '',
+      duration: 30,
+      notes: ''
+    });
+    setIsAddLessonModalOpen(true);
+  };
+
+  // Lưu bài học mới vào chương đã chọn
+  const handleSaveLesson = (e) => {
+    e.preventDefault();
+    if (!newLessonForm.title.trim() || !selectedChapterForLesson) return;
+
+    const newLessonObj = {
+      id: 'les_' + Date.now(),
+      title: newLessonForm.title.trim(),
+      type: newLessonForm.type,
+      duration: Number(newLessonForm.duration) || 30,
+      resource: newLessonForm.urlOrFile || (newLessonForm.type === 'video' ? 'Video MP4' : 'Tài liệu Slide')
+    };
+
+    const updatedChapters = selectedCourse.chapters.map(ch => {
+      if (ch.id === selectedChapterForLesson.id) {
+        const existingLessons = ch.lessons || [];
+        const nextLessons = [...existingLessons, newLessonObj];
+        const totalMins = nextLessons.reduce((sum, l) => sum + (Number(l.duration) || 0), 0);
+        return {
+          ...ch,
+          lessons: nextLessons,
+          duration: `${nextLessons.length} bài • ${totalMins} phút`
+        };
+      }
+      return ch;
+    });
+
+    const totalCourseLessons = updatedChapters.reduce((acc, ch) => acc + (ch.lessons ? ch.lessons.length : 0), 0);
+    const updatedCourse = {
+      ...selectedCourse,
+      lessonsCount: Math.max(selectedCourse.lessonsCount + 1, totalCourseLessons),
+      chapters: updatedChapters
+    };
+
+    setSelectedCourse(updatedCourse);
+    setCourses(courses.map(c => c.id === updatedCourse.id ? updatedCourse : c));
+    setExpandedChapters(prev => ({ ...prev, [selectedChapterForLesson.id]: true }));
+    setIsAddLessonModalOpen(false);
+  };
+
+  const handleOpenEditLesson = (chapter, lesson) => {
+    setEditingLesson({ chapterId: chapter.id, lessonId: lesson.id });
+    setEditingLessonForm({
+      title: lesson.title,
+      type: lesson.type,
+      resource: lesson.resource,
+      duration: lesson.duration
+    });
+    setIsEditLessonModalOpen(true);
+  };
+
+  const handleSaveEditedLesson = (e) => {
+    e.preventDefault();
+    if (!editingLesson || !editingLessonForm.title.trim()) return;
+
+    const updatedChapters = selectedCourse.chapters.map((chapter) => {
+      if (chapter.id !== editingLesson.chapterId) return chapter;
+      const nextLessons = chapter.lessons.map((lesson) =>
+        lesson.id === editingLesson.lessonId
+          ? {
+              ...lesson,
+              title: editingLessonForm.title.trim(),
+              type: editingLessonForm.type,
+              resource: editingLessonForm.resource.trim() || lesson.resource,
+              duration: Number(editingLessonForm.duration) || 30
+            }
+          : lesson
+      );
+      const totalMins = nextLessons.reduce((sum, lesson) => sum + (Number(lesson.duration) || 0), 0);
+      return {
+        ...chapter,
+        lessons: nextLessons,
+        duration: `${nextLessons.length} bài • ${totalMins} phút`
+      };
+    });
+
+    const updatedCourse = { ...selectedCourse, chapters: updatedChapters };
+    setSelectedCourse(updatedCourse);
+    setCourses((currentCourses) => currentCourses.map((course) =>
+      course.id === updatedCourse.id ? updatedCourse : course
+    ));
+    setIsEditLessonModalOpen(false);
+  };
+
+  // Lưu chỉnh sửa thông tin khóa học
+  const handleSaveCourseEdit = (e) => {
+    e.preventDefault();
+    const updated = {
+      ...selectedCourse,
+      title: courseEditForm.title.trim() || selectedCourse.title,
+      level: courseEditForm.level,
+      price: Number(courseEditForm.price) || 0,
+      description: courseEditForm.description.trim()
+    };
+    setSelectedCourse(updated);
+    setCourses(courses.map(c => c.id === updated.id ? updated : c));
+    setIsEditCourseModalOpen(false);
+  };
+
+  // Xử lý upload video / slide
+  const handleStartUploadMedia = (e) => {
+    e.preventDefault();
+    const chapterId = mediaUploadForm.chapterId;
+    if (!chapterId) return;
     setUploadProgress(10);
     const timer = setInterval(() => {
       setUploadProgress(prev => {
         if (prev >= 100) {
           clearInterval(timer);
-          setTimeout(() => setUploadProgress(null), 1200);
+          setTimeout(() => {
+            const resourceName = mediaUploadForm.externalLink.trim()
+              || mediaUploadForm.fileTitle.trim()
+              || (mediaUploadForm.mediaType === 'video' ? 'Video MP4 mới' : 'Slide bài giảng mới');
+            const lesson = {
+              id: 'les_' + Date.now(),
+              title: mediaUploadForm.fileTitle.trim() || (mediaUploadForm.mediaType === 'video' ? 'Video bài giảng mới' : 'Slide bài giảng mới'),
+              type: mediaUploadForm.mediaType,
+              duration: 30,
+              resource: resourceName
+            };
+            const updatedChapters = selectedCourse.chapters.map((chapter) => {
+              if (chapter.id !== chapterId) return chapter;
+              const nextLessons = [...(chapter.lessons || []), lesson];
+              const totalMins = nextLessons.reduce((sum, item) => sum + (Number(item.duration) || 0), 0);
+              return {
+                ...chapter,
+                lessons: nextLessons,
+                duration: `${nextLessons.length} bài • ${totalMins} phút`
+              };
+            });
+            const updatedCourse = { ...selectedCourse, chapters: updatedChapters };
+            const totalCourseLessons = updatedChapters.reduce((sum, chapter) => sum + (chapter.lessons?.length || 0), 0);
+            updatedCourse.lessonsCount = totalCourseLessons;
+            setSelectedCourse(updatedCourse);
+            setCourses((currentCourses) => currentCourses.map((course) =>
+              course.id === updatedCourse.id ? updatedCourse : course
+            ));
+            setExpandedChapters((current) => ({ ...current, [chapterId]: true }));
+            setUploadProgress(null);
+            setIsUploadMediaModalOpen(false);
+            alert(`Đã tải lên và thêm [${lesson.title}] vào đề cương thành công!`);
+          }, 800);
           return 100;
         }
-        return prev + 30;
+        return prev + 25;
       });
-    }, 250);
+    }, 200);
+  };
+
+  // Đổi trạng thái điểm danh học viên
+  const handleToggleAttendance = (studentId, status) => {
+    setAttendanceList(prev => prev.map(st => st.id === studentId ? { ...st, status } : st));
+  };
+
+  // Điểm danh tất cả có mặt
+  const handleMarkAllPresent = () => {
+    setAttendanceList(prev => prev.map(st => ({ ...st, status: 'present' })));
+  };
+
+  // Lưu điểm danh buổi học
+  const handleSaveAttendance = () => {
+    setAttendanceSavedToast(true);
+    setTimeout(() => setAttendanceSavedToast(false), 2500);
   };
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Tiêu đề & Chuyển đổi tab gộp: Khóa Học & Đề Cương <-> Điểm Danh */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Quản lý Khóa học & Biên soạn Nội dung</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Soạn thảo đề cương, tải video/tài liệu và theo dõi trạng thái duyệt</p>
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Quản Lý Khóa Học & Điểm Danh Buổi Học</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold">
+              Gộp Phân Hệ
+            </span>
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Biên soạn nội dung bài giảng đề cương, tải video/slide và quản lý chuyên cần học viên tại lớp
+          </p>
         </div>
-        <button
-          onClick={() => alert('Mở form tạo khóa học mới')}
-          className="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tạo Khóa Học Mới</span>
-        </button>
+
+        {/* Thanh chuyển đổi tab phụ */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl self-start md:self-auto border border-slate-200 dark:border-slate-700">
+          <button
+            onClick={() => setActiveSubTab('curriculum')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              activeSubTab === 'curriculum'
+                ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Khóa Học & Đề Cương</span>
+          </button>
+          <button
+            onClick={() => setActiveSubTab('attendance')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              activeSubTab === 'attendance'
+                ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <CheckSquare className="w-3.5 h-3.5" />
+            <span>Điểm Danh Theo Buổi Học</span>
+          </button>
+        </div>
       </div>
 
-      {/* Danh sách khóa học */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-        {courses.map((course) => {
-          const isSelected = selectedCourse.id === course.id;
-          return (
-            <div
-              key={course.id}
-              onClick={() => setSelectedCourse(course)}
-              className={`p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all ${
-                isSelected
-                  ? 'border-emerald-600 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-md ring-2 ring-emerald-500/20'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                  {course.level}
-                </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                  course.status === 'da duyet' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' :
-                  course.status === 'cho duyet' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' :
-                  'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
-                }`}>
-                  {course.status === 'da duyet' && <CheckCircle className="w-3 h-3" />}
-                  {course.status === 'cho duyet' && <Clock className="w-3 h-3" />}
-                  {course.status === 'tu choi' && <AlertCircle className="w-3 h-3" />}
-                  <span>{course.statusText}</span>
-                </span>
+      {/* ======================================================== */}
+      {/* PHẦN 1: KHÓA HỌC & BIÊN SOẠN ĐỀ CƯƠNG */}
+      {/* ======================================================== */}
+      {activeSubTab === 'curriculum' && (
+        <div className="space-y-4 sm:space-y-6">
+          {/* Danh sách khóa học dạng thẻ */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+            {courses.map((course) => {
+              const isSelected = selectedCourse.id === course.id;
+              return (
+                <div
+                  key={course.id}
+                  onClick={() => setSelectedCourse(course)}
+                  className={`p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-emerald-600 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-md ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {course.level}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                      course.status === 'da duyet' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' :
+                      course.status === 'cho duyet' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' :
+                      'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
+                    }`}>
+                      {course.status === 'da duyet' && <CheckCircle className="w-3 h-3" />}
+                      {course.status === 'cho duyet' && <Clock className="w-3 h-3" />}
+                      {course.status === 'tu choi' && <AlertCircle className="w-3 h-3" />}
+                      <span>{course.statusText}</span>
+                    </span>
+                  </div>
+
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white mt-2.5 line-clamp-1">{course.title}</h4>
+                  <div className="flex items-center justify-between mt-1 text-xs text-slate-400">
+                    <span>{course.chapters.length} chương • {course.lessonsCount} bài học</span>
+                    <strong className="text-emerald-600 font-bold">{course.price?.toLocaleString('vi-VN')} đ</strong>
+                  </div>
+
+                  {course.status === 'tu choi' && (
+                    <div className="mt-2.5 p-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-[11px] text-red-700 dark:text-red-300">
+                      <span className="font-bold">Lý do từ chối: </span>
+                      <span>{course.rejectReason}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Khu vực biên soạn chương & tải tài liệu */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800 gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-emerald-600 font-bold uppercase tracking-wider">Đang biên soạn đề cương</span>
+                  <button
+                    onClick={() => setIsEditCourseModalOpen(true)}
+                    className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-[11px] font-bold inline-flex items-center gap-1 border border-slate-300 dark:border-slate-700"
+                    title="Chỉnh sửa tên, trình độ và giá khóa học"
+                  >
+                    <Edit3 className="w-3 h-3 text-emerald-600" />
+                    <span>Chỉnh sửa khóa học</span>
+                  </button>
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">{selectedCourse.title}</h3>
+                <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">{selectedCourse.description}</p>
               </div>
 
-              <h4 className="font-extrabold text-sm text-slate-900 dark:text-white mt-2.5 line-clamp-1">{course.title}</h4>
-              <p className="text-xs text-slate-400 mt-1">{course.chapters.length} chương • {course.lessonsCount} bài học</p>
-
-              {course.status === 'tu choi' && (
-                <div className="mt-2.5 p-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-[11px] text-red-700 dark:text-red-300">
-                  <span className="font-bold">Lý do từ chối: </span>
-                  <span>{course.rejectReason}</span>
-                </div>
-              )}
+              {/* Các nút tác vụ nhanh */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setIsUploadMediaModalOpen(true)}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Tải Video / Slide</span>
+                </button>
+                <button
+                  onClick={() => setIsAddingChapter(true)}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Thêm chương</span>
+                </button>
+              </div>
             </div>
-          );
-        })}
-      </div>
 
-      {/* Khu vực biên soạn chương & tải tài liệu */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800 gap-3">
-          <div>
-            <span className="text-xs text-emerald-600 font-bold uppercase tracking-wider">Đang biên soạn đề cương</span>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">{selectedCourse.title}</h3>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={handleSimulateUpload}
-              className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              <span>Tải Video / Slide</span>
-            </button>
-            <button
-              onClick={() => setIsAddingChapter(true)}
-              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Thêm chương</span>
-            </button>
+            {/* Form tạo chương mới */}
+            {isAddingChapter && (
+              <form onSubmit={handleAddChapter} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-emerald-500/40 space-y-2.5">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase">Tên chương học mới</h4>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    placeholder="VD: Chương 5: Xử lý đoạn hội thoại 3 người..."
+                    value={newChapterTitle}
+                    onChange={(e) => setNewChapterTitle(e.target.value)}
+                    className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-emerald-500"
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <button type="submit" className="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700">
+                      Lưu Chương
+                    </button>
+                    <button type="button" onClick={() => setIsAddingChapter(false)} className="flex-1 sm:flex-none px-3 py-2 text-slate-500 text-xs hover:bg-slate-200 rounded-xl">
+                      Hủy
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {/* Danh sách chương & các bài học chi tiết */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+                <span>Danh sách chương học ({selectedCourse.chapters.length})</span>
+                <span className="text-[11px]">Bấm vào chương để xem và quản lý bài học chi tiết</span>
+              </div>
+
+              {selectedCourse.chapters.map((chap, idx) => {
+                const isExpanded = expandedChapters[chap.id];
+                const lessons = chap.lessons || [];
+
+                return (
+                  <div
+                    key={chap.id}
+                    className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs"
+                  >
+                    {/* Header của chương */}
+                    <div className="p-3 sm:p-4 flex items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
+                      <div
+                        onClick={() => setExpandedChapters(prev => ({ ...prev, [chap.id]: !prev[chap.id] }))}
+                        className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1"
+                      >
+                        <span className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <h5 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate flex items-center gap-1.5">
+                            <span>{chap.title}</span>
+                            {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
+                          </h5>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{chap.duration}</p>
+                        </div>
+                      </div>
+
+                      {/* Nút tác vụ cho chương */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => handleOpenAddLessonModal(chap)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 transition-colors shadow-xs"
+                          title="Thêm bài học mới vào chương này"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>+ Bài</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Danh sách bài học con khi mở rộng */}
+                    {isExpanded && (
+                      <div className="p-3 sm:p-4 bg-white dark:bg-slate-900 space-y-2">
+                        {lessons.length === 0 ? (
+                          <div className="text-center py-4 text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                            Chưa có bài học nào trong chương này. Nhấn nút <strong>+ Bài</strong> ở trên để thêm video hoặc slide bài giảng.
+                          </div>
+                        ) : (
+                          lessons.map((lesson, lIdx) => (
+                            <div
+                              key={lesson.id}
+                              className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-slate-50/30 dark:bg-slate-800/20 flex items-center justify-between gap-3 text-xs"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="w-5 h-5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold flex items-center justify-center shrink-0">
+                                  {lIdx + 1}
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">{lesson.title}</p>
+                                  <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                                    <span className="capitalize">{lesson.type === 'video' ? 'Video Bài Giảng' : lesson.type === 'slide' ? 'Slide Bài Giảng' : lesson.type === 'audio' ? 'Audio Luyện Nghe' : 'Quiz Bài Tập'}</span>
+                                    <span>•</span>
+                                    <span>{lesson.duration} phút</span>
+                                    <span>•</span>
+                                    <span className="text-indigo-600 font-mono truncate max-w-[150px]">{lesson.resource}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditLesson(chap, lesson)}
+                                  className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                                  title="Chỉnh sửa bài học"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                  Sẵn sàng
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
+      )}
 
-        {uploadProgress !== null && (
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center justify-between text-xs font-semibold mb-1">
-              <span>Đang tải lên bài giảng: Lesson_Part7_Master.mp4</span>
-              <span>{uploadProgress}%</span>
+      {/* ======================================================== */}
+      {/* PHẦN 2: ĐIỂM DANH THEO BUỔI HỌC (GỘP CHUNG) */}
+      {/* ======================================================== */}
+      {activeSubTab === 'attendance' && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-3">
+            <div>
+              <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Hệ thống điểm danh lớp học</span>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+                Điểm Danh & Theo Dõi Chuyên Cần Lớp Học
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Cập nhật hiện diện học viên theo từng buổi học, tự động đồng bộ tỷ lệ chuyên cần cho học phần
+              </p>
             </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
-              <div className="bg-emerald-500 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleMarkAllPresent}
+                className="px-3 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-bold transition-colors"
+              >
+                Tất Cả Có Mặt
+              </button>
+              <button
+                onClick={handleSaveAttendance}
+                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Lưu Điểm Danh</span>
+              </button>
             </div>
           </div>
-        )}
 
-        {isAddingChapter && (
-          <form onSubmit={handleAddChapter} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-emerald-500/40 space-y-2.5">
-            <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase">Tên chương học mới</h4>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                placeholder="VD: Chương 5: Xử lý đoạn hội thoại 3 người..."
-                value={newChapterTitle}
-                onChange={(e) => setNewChapterTitle(e.target.value)}
-                className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-emerald-500"
-              />
-              <div className="flex gap-2">
-                <button type="submit" className="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700">
-                  Lưu
-                </button>
-                <button type="button" onClick={() => setIsAddingChapter(false)} className="flex-1 sm:flex-none px-3 py-2 text-slate-500 text-xs hover:bg-slate-200 rounded-xl">
+          {attendanceSavedToast && (
+            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-2 animate-pulse">
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
+              <span>Đã lưu thành công dữ liệu điểm danh buổi {selectedSession} của lớp!</span>
+            </div>
+          )}
+
+          {/* Bộ chọn Lớp & Buổi học */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-xs">
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Chọn lớp học đang dạy:</label>
+              <select
+                value={selectedClassId}
+                onChange={(e) => setSelectedClassId(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold"
+              >
+                <option value="TOEIC-K28-T246">Lớp TOEIC Cấp Tốc 750+ (K28) - P.402</option>
+                <option value="ETS-K15-T357">Lớp Luyện Đề ETS 2024 (K15) - Trực tuyến</option>
+                <option value="LIS-PART-09">Lớp Chữa Đề Listening Part 3 & 4 - P.201</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Buổi học điểm danh:</label>
+              <select
+                value={selectedSession}
+                onChange={(e) => setSelectedSession(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold"
+              >
+                <option value={1}>Buổi 1: Định hướng đề thi TOEIC mới & Part 1</option>
+                <option value={2}>Buổi 2: Câu hỏi phủ định & câu hỏi đuôi Part 2</option>
+                <option value={3}>Buổi 3: Luyện tập hội thoại thương mại 3 người Part 3 (Hôm nay)</option>
+                <option value={4}>Buổi 4: Các thì hoàn thành & cấu trúc giả định Part 5</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Bảng điểm danh học viên */}
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-slate-500 uppercase font-bold text-[11px]">
+                <tr>
+                  <th className="p-3">Học viên</th>
+                  <th className="p-3 hidden sm:table-cell">Mã học viên</th>
+                  <th className="p-3">Trạng thái hiện diện</th>
+                  <th className="p-3 text-right">Thao tác nhanh</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {attendanceList.map((st) => (
+                  <tr key={st.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                    <td className="p-3">
+                      <div className="font-bold text-slate-900 dark:text-white">{st.name}</div>
+                      <div className="text-[11px] text-slate-400 sm:hidden">{st.code}</div>
+                    </td>
+                    <td className="p-3 hidden sm:table-cell font-mono text-slate-500">{st.code}</td>
+                    <td className="p-3">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                        st.status === 'present' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' :
+                        st.status === 'late' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' :
+                        st.status === 'absent_excused' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300' :
+                        'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
+                      }`}>
+                        {st.status === 'present' ? 'Có mặt' : st.status === 'late' ? 'Đi muộn' : st.status === 'absent_excused' ? 'Vắng có phép' : 'Vắng không phép'}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right">
+                      <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-50 dark:bg-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAttendance(st.id, 'present')}
+                          className={`px-2 py-1 text-[10px] font-bold rounded-md transition-colors ${
+                            st.status === 'present' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:text-emerald-600'
+                          }`}
+                        >
+                          Có mặt
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAttendance(st.id, 'late')}
+                          className={`px-2 py-1 text-[10px] font-bold rounded-md transition-colors ${
+                            st.status === 'late' ? 'bg-amber-500 text-white' : 'text-slate-600 hover:text-amber-500'
+                          }`}
+                        >
+                          Muộn
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAttendance(st.id, 'absent_excused')}
+                          className={`px-2 py-1 text-[10px] font-bold rounded-md transition-colors ${
+                            st.status === 'absent_excused' ? 'bg-blue-500 text-white' : 'text-slate-600 hover:text-blue-500'
+                          }`}
+                        >
+                          Có phép
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAttendance(st.id, 'absent_unexcused')}
+                          className={`px-2 py-1 text-[10px] font-bold rounded-md transition-colors ${
+                            st.status === 'absent_unexcused' ? 'bg-red-500 text-white' : 'text-slate-600 hover:text-red-500'
+                          }`}
+                        >
+                          Vắng
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL 1: THÊM BÀI HỌC VÀO CHƯƠNG ĐỀ CƯƠNG (+ BÀI) */}
+      {/* ======================================================== */}
+      {isAddLessonModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Đề Cương Khóa Học</span>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                  Thêm Bài Học Mới Vào {selectedChapterForLesson?.title?.split(':')[0] || 'Chương'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsAddLessonModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLesson} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tên bài học (*):</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="VD: Bài 3: Chiến thuật tránh bẫy từ đồng âm trong Part 1"
+                  value={newLessonForm.title}
+                  onChange={(e) => setNewLessonForm({ ...newLessonForm, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-emerald-500 font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Loại bài học:</label>
+                  <select
+                    value={newLessonForm.type}
+                    onChange={(e) => setNewLessonForm({ ...newLessonForm, type: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                  >
+                    <option value="video">Video Bài Giảng (MP4/Stream)</option>
+                    <option value="slide">Slide Bài Giảng (PDF/PowerPoint)</option>
+                    <option value="audio">Audio Luyện Nghe (MP3)</option>
+                    <option value="quiz">Bài Tập Trắc Nghiệm (ETS)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Thời lượng ước tính (phút):</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="300"
+                    value={newLessonForm.duration}
+                    onChange={(e) => setNewLessonForm({ ...newLessonForm, duration: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Đường dẫn Video / Tệp đính kèm (URL YouTube, Google Drive hoặc tên file):
+                </label>
+                <input
+                  type="text"
+                  placeholder="VD: https://youtube.com/watch?v=toeic123 hoặc Lesson_Part1.mp4"
+                  value={newLessonForm.urlOrFile}
+                  onChange={(e) => setNewLessonForm({ ...newLessonForm, urlOrFile: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Ghi chú & hướng dẫn học viên:</label>
+                <textarea
+                  rows={2}
+                  placeholder="Gợi ý phương pháp nghe và làm bài trước khi xem video..."
+                  value={newLessonForm.notes}
+                  onChange={(e) => setNewLessonForm({ ...newLessonForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddLessonModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 font-bold"
+                >
                   Hủy
                 </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5 shadow-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Thêm Bài Vào Đề Cương</span>
+                </button>
               </div>
-            </div>
-          </form>
-        )}
+            </form>
+          </div>
+        </div>
+      )}
 
-        <div className="space-y-2.5">
-          <p className="text-xs font-medium text-slate-400">Danh sách chương học ({selectedCourse.chapters.length}):</p>
-          {selectedCourse.chapters.map((chap, idx) => (
-            <div
-              key={chap.id}
-              className="p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-2 shadow-xs"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold flex items-center justify-center shrink-0">
-                  {idx + 1}
-                </span>
-                <div className="min-w-0">
-                  <h5 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{chap.title}</h5>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{chap.duration}</p>
+      {/* ======================================================== */}
+      {/* MODAL 2: CHỈNH SỬA THÔNG TIN KHÓA HỌC */}
+      {/* ======================================================== */}
+      {isEditCourseModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Cập Nhật Thông Tin</span>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">Chỉnh Sửa Khóa Học Đã Thêm</h3>
+              </div>
+              <button
+                onClick={() => setIsEditCourseModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCourseEdit} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tên khóa học (*):</label>
+                <input
+                  type="text"
+                  required
+                  value={courseEditForm.title}
+                  onChange={(e) => setCourseEditForm({ ...courseEditForm, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Trình độ / Target:</label>
+                  <select
+                    value={courseEditForm.level}
+                    onChange={(e) => setCourseEditForm({ ...courseEditForm, level: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium"
+                  >
+                    <option value="Cơ bản (0-450)">Cơ bản (0-450 Target)</option>
+                    <option value="Trung cấp 500-650">Trung cấp 500-650</option>
+                    <option value="750+ Target">Chuyên sâu 750+ Target</option>
+                    <option value="Luyện Đề 600-800">Luyện Đề ETS 600-800</option>
+                    <option value="SW 300+">Speaking & Writing 300+</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Học phí bán (VNĐ):</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="50000"
+                    value={courseEditForm.price}
+                    onChange={(e) => setCourseEditForm({ ...courseEditForm, price: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono font-bold"
+                  />
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100" title="Sửa">
-                  <Edit3 className="w-3.5 h-3.5" />
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Mô tả tóm tắt khóa học:</label>
+                <textarea
+                  rows={3}
+                  value={courseEditForm.description}
+                  onChange={(e) => setCourseEditForm({ ...courseEditForm, description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsEditCourseModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 font-bold"
+                >
+                  Hủy
                 </button>
-                <button className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200">
-                  + Bài
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5 shadow-sm"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Lưu Thay Đổi</span>
                 </button>
               </div>
-            </div>
-          ))}
+            </form>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ======================================================== */}
+      {isEditLessonModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">Chỉnh sửa bài học</span>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">Cập nhật nội dung bài giảng</h3>
+              </div>
+              <button type="button" onClick={() => setIsEditLessonModalOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSaveEditedLesson} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold mb-1">Tên bài học</label>
+                <input required value={editingLessonForm.title} onChange={(e) => setEditingLessonForm((current) => ({ ...current, title: e.target.value }))} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold mb-1">Loại bài</label>
+                  <select value={editingLessonForm.type} onChange={(e) => setEditingLessonForm((current) => ({ ...current, type: e.target.value }))} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                    <option value="video">Video</option>
+                    <option value="slide">Slide</option>
+                    <option value="audio">Audio</option>
+                    <option value="quiz">Quiz</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold mb-1">Thời lượng (phút)</label>
+                  <input type="number" min="1" value={editingLessonForm.duration} onChange={(e) => setEditingLessonForm((current) => ({ ...current, duration: e.target.value }))} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" />
+                </div>
+              </div>
+              <div>
+                <label className="block font-bold mb-1">Liên kết hoặc tên tài liệu</label>
+                <input value={editingLessonForm.resource} onChange={(e) => setEditingLessonForm((current) => ({ ...current, resource: e.target.value }))} className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setIsEditLessonModalOpen(false)} className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600">Hủy</button>
+                <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold">Lưu thay đổi</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: TẢI VIDEO / SLIDE CHUYÊN NGHIỆP */}
+      {/* ======================================================== */}
+      {isUploadMediaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">Hệ Thống Đa Phương Tiện</span>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">Tải Lên Video & Slide Bài Giảng</h3>
+              </div>
+              <button
+                onClick={() => setIsUploadMediaModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleStartUploadMedia} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Đưa vào chương học:</label>
+                <select
+                  value={mediaUploadForm.chapterId}
+                  onChange={(e) => setMediaUploadForm({ ...mediaUploadForm, chapterId: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium"
+                >
+                  {selectedCourse.chapters.map((ch) => (
+                    <option key={ch.id} value={ch.id}>{ch.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Loại tệp phương tiện:</label>
+                  <select
+                    value={mediaUploadForm.mediaType}
+                    onChange={(e) => setMediaUploadForm({ ...mediaUploadForm, mediaType: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                  >
+                    <option value="video">Video Bài Giảng (MP4, MKV)</option>
+                    <option value="slide">Slide Thuyết Trình (PDF, PPTX)</option>
+                    <option value="audio">Audio Luyện Nghe (MP3, WAV)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tiêu đề bài giảng:</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: Bài giảng Part 1 Nâng Cao"
+                    value={mediaUploadForm.fileTitle}
+                    onChange={(e) => setMediaUploadForm({ ...mediaUploadForm, fileTitle: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Khu vực Drag & Drop */}
+              <div className="border-2 border-dashed border-indigo-200 dark:border-indigo-900/60 rounded-2xl p-6 text-center bg-indigo-50/30 dark:bg-indigo-950/20 hover:bg-indigo-50/50 transition-colors">
+                <Upload className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-2" />
+                <p className="font-bold text-slate-800 dark:text-slate-200">Kéo và thả tệp Video/Slide vào đây</p>
+                <p className="text-[11px] text-slate-400 mt-1">Hỗ trợ các định dạng .mp4, .pdf, .pptx, .mp3 (Tối đa 500MB)</p>
+                <label className="mt-3 inline-block px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold text-xs cursor-pointer hover:bg-indigo-700 shadow-xs">
+                  <span>Chọn tệp từ máy tính</span>
+                  <input type="file" className="hidden" onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setMediaUploadForm(prev => ({ ...prev, fileTitle: e.target.files[0].name }));
+                    }
+                  }} />
+                </label>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Hoặc dán liên kết URL (Google Drive / Vimeo / YouTube):</label>
+                <input
+                  type="text"
+                  placeholder="https://drive.google.com/file/d/..."
+                  value={mediaUploadForm.externalLink}
+                  onChange={(e) => setMediaUploadForm({ ...mediaUploadForm, externalLink: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono text-[11px]"
+                />
+              </div>
+
+              {uploadProgress !== null && (
+                <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                  <div className="flex justify-between font-bold text-xs">
+                    <span>Đang tải lên bài giảng...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                    <div className="bg-emerald-500 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsUploadMediaModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 font-bold"
+                >
+                  Đóng
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploadProgress !== null}
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold flex items-center gap-1.5 shadow-sm"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>{uploadProgress !== null ? 'Đang Tải Lên...' : 'Bắt Đầu Tải Lên'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1061,42 +2035,147 @@ function TeacherClassDetailView() {
   );
 }
 
-// --- 4. Ngân hàng Đề thi & Chấm điểm 4 Kỹ Năng ---
+// --- 4. Giao Bài Tập & Chấm Điểm Học Viên (Chi Tiết % Hoàn Thành, Thời Gian, Số Câu Đúng) ---
 function TeacherGradingView() {
-  const [selectedSub, setSelectedSub] = useState(MOCK_DATA.teacher.pendingSubmissions[0]);
-  const [gradeScore, setGradeScore] = useState('85');
-  const [feedback, setFeedback] = useState('Phát âm tốt, ngữ điệu tự nhiên. Chú ý nhấn trọng âm các từ 3 âm tiết.');
+  const [submissions, setSubmissions] = useState(MOCK_DATA.teacher.pendingSubmissions);
+  const [selectedSub, setSelectedSub] = useState(submissions[0]);
+  const [filterStatus, setFilterStatus] = useState('all'); // 'all' | 'pending' | 'graded'
+
+  // Chấm điểm state
+  const [gradeScore, setGradeScore] = useState(selectedSub.gradeScore || '85');
+  const [feedback, setFeedback] = useState(selectedSub.feedback || 'Phát âm tốt, ngữ điệu tự nhiên. Chú ý nhấn trọng âm các từ 3 âm tiết.');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Modal Giao Bài Tập Mới
+  const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false);
+  const [newAssignmentForm, setNewAssignmentForm] = useState({
+    title: '',
+    classCode: 'TOEIC-K28-T246',
+    skillType: 'speaking',
+    deadline: '23:59 Chủ Nhật tuần này',
+    description: '',
+    durationLimit: '45 phút',
+    totalQuestions: '30 câu'
+  });
+  const [assignmentCreatedToast, setAssignmentCreatedToast] = useState(false);
+
+  // Đồng bộ khi chọn bài nộp khác
+  useEffect(() => {
+    setGradeScore(selectedSub.gradeScore || (selectedSub.status === 'graded' ? '88' : ''));
+    setFeedback(selectedSub.feedback || (selectedSub.status === 'graded' ? 'Làm bài tốt, nắm chắc từ vựng kinh tế.' : ''));
+    setIsPlayingAudio(false);
+  }, [selectedSub]);
+
+  // Lọc danh sách bài nộp
+  const filteredSubmissions = useMemo(() => {
+    if (filterStatus === 'pending') return submissions.filter(s => s.status === 'pending');
+    if (filterStatus === 'graded') return submissions.filter(s => s.status === 'graded');
+    return submissions;
+  }, [submissions, filterStatus]);
+
+  // Xử lý lưu điểm & phản hồi
   const handleSaveGrade = (e) => {
     e.preventDefault();
+    const updated = submissions.map(sub => {
+      if (sub.id === selectedSub.id) {
+        return {
+          ...sub,
+          status: 'graded',
+          gradeScore: gradeScore || '85/100',
+          feedback: feedback || 'Giảng viên đã xem xét và đánh giá đạt yêu cầu.'
+        };
+      }
+      return sub;
+    });
+    setSubmissions(updated);
+    setSelectedSub(prev => ({
+      ...prev,
+      status: 'graded',
+      gradeScore: gradeScore || '85/100',
+      feedback: feedback
+    }));
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2500);
   };
 
+  // Xử lý tạo và giao bài tập mới
+  const handleCreateAssignment = (e) => {
+    e.preventDefault();
+    if (!newAssignmentForm.title.trim()) return;
+
+    setIsCreateAssignmentModalOpen(false);
+    setAssignmentCreatedToast(true);
+    setTimeout(() => setAssignmentCreatedToast(false), 3000);
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Tiêu đề & Nút Giao Bài Tập Mới */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Ngân hàng Đề thi & Chấm điểm 4 Kỹ Năng</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Tạo đề thi mới và chấm bài nộp trực tiếp của học viên</p>
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Giao Bài Tập & Chấm Điểm Học Viên</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold">
+              4 Kỹ Năng
+            </span>
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Xem % hoàn thành, thời gian làm bài, số câu đúng và chấm điểm bài nói/viết trực tiếp của học viên
+          </p>
         </div>
+
         <button
-          onClick={() => alert('Mở modal tạo đề thi 4 kỹ năng (Hỗ trợ upload file audio mp3)')}
-          className="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+          onClick={() => setIsCreateAssignmentModalOpen(true)}
+          className="self-start sm:self-auto px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
         >
           <Plus className="w-4 h-4" />
-          <span>Tạo Đề Thi Mới</span>
+          <span>Giao Bài Tập Mới</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Danh sách bài nộp */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3.5 sm:p-4 shadow-xs space-y-2.5">
-          <h4 className="font-bold text-xs uppercase text-slate-400 tracking-wider">Danh sách bài nộp ({MOCK_DATA.teacher.pendingSubmissions.length})</h4>
-          <div className="space-y-2">
-            {MOCK_DATA.teacher.pendingSubmissions.map((sub) => {
+      {assignmentCreatedToast && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-2 animate-bounce">
+          <CheckCircle className="w-4 h-4 text-emerald-600" />
+          <span>Đã phát đề bài tập thành công cho toàn bộ học viên trong lớp!</span>
+        </div>
+      )}
+
+      {/* Grid 2 cột: Danh sách bài nộp & Khung chấm điểm chi tiết */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+        {/* CỘT TRÁI: DANH SÁCH BÀI NỘP CỦA HỌC VIÊN */}
+        <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-3.5">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h4 className="font-extrabold text-xs uppercase text-slate-700 dark:text-slate-300 tracking-wider">
+              Danh sách bài nộp ({filteredSubmissions.length})
+            </h4>
+
+            {/* Bộ lọc trạng thái */}
+            <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-50 dark:bg-slate-800 text-[10px]">
+              <button
+                onClick={() => setFilterStatus('all')}
+                className={`px-2 py-0.5 rounded font-bold transition-colors ${filterStatus === 'all' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500'}`}
+              >
+                Tất cả
+              </button>
+              <button
+                onClick={() => setFilterStatus('pending')}
+                className={`px-2 py-0.5 rounded font-bold transition-colors ${filterStatus === 'pending' ? 'bg-amber-500 text-white' : 'text-slate-500'}`}
+              >
+                Chưa chấm
+              </button>
+              <button
+                onClick={() => setFilterStatus('graded')}
+                className={`px-2 py-0.5 rounded font-bold transition-colors ${filterStatus === 'graded' ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}
+              >
+                Đã chấm
+              </button>
+            </div>
+          </div>
+
+          {/* Danh sách các bài nộp */}
+          <div className="space-y-2.5 max-h-[640px] overflow-y-auto pr-1">
+            {filteredSubmissions.map((sub) => {
               const isSelected = selectedSub.id === sub.id;
               return (
                 <div
@@ -1104,113 +2183,340 @@ function TeacherGradingView() {
                   onClick={() => setSelectedSub(sub)}
                   className={`p-3 rounded-xl border cursor-pointer transition-all ${
                     isSelected
-                      ? 'border-emerald-600 bg-emerald-50/30 dark:bg-emerald-950/30 ring-1 ring-emerald-500'
-                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                      ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20 shadow-xs'
+                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                       {sub.classCode}
                     </span>
-                    <span className="text-amber-600 font-bold">Chưa chấm</span>
+                    <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] ${
+                      sub.status === 'graded'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                    }`}>
+                      {sub.status === 'graded' ? 'Đã chấm điểm' : 'Chưa chấm'}
+                    </span>
                   </div>
-                  <h5 className="font-bold text-xs text-slate-900 dark:text-white mt-1.5">{sub.studentName}</h5>
-                  <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{sub.examTitle}</p>
+
+                  <h5 className="font-bold text-xs text-slate-900 dark:text-white mt-1.5 flex items-center justify-between">
+                    <span>{sub.studentName}</span>
+                    <span className="text-[10px] font-mono text-slate-400 font-normal">{sub.studentCode}</span>
+                  </h5>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{sub.examTitle}</p>
+
+                  {/* CÁC THÔNG SỐ QUAN TRỌNG: % HOÀN THÀNH, THỜI GIAN, SỐ CÂU ĐÚNG */}
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-3 gap-1 text-center text-[10px]">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-1 rounded-md">
+                      <span className="text-slate-400 block">% Hoàn thành</span>
+                      <strong className="text-indigo-600 dark:text-indigo-400 font-bold">{sub.completionRate}%</strong>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-1 rounded-md">
+                      <span className="text-slate-400 block">Thời gian</span>
+                      <strong className="text-slate-700 dark:text-slate-300 font-bold truncate block">{sub.duration}</strong>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-1 rounded-md">
+                      <span className="text-slate-400 block">Số câu đúng</span>
+                      <strong className="text-emerald-600 dark:text-emerald-400 font-bold truncate block">{sub.correctAnswers}</strong>
+                    </div>
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Khung chấm điểm chi tiết */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-5">
+        {/* CỘT PHẢI: KHUNG CHẤM ĐIỂM CHI TIẾT */}
+        <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-2">
             <div>
-              <span className="text-xs font-bold text-emerald-600">{selectedSub.classCode}</span>
-              <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white mt-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-indigo-600">{selectedSub.classCode}</span>
+                <span className="text-[10px] font-semibold text-slate-400">• Nộp {selectedSub.submittedAt}</span>
+              </div>
+              <h3 className="font-extrabold text-base text-slate-900 dark:text-white mt-0.5">
                 Chấm bài: {selectedSub.examTitle}
               </h3>
-              <p className="text-xs text-slate-400">Học viên: <strong className="text-slate-700 dark:text-slate-300">{selectedSub.studentName}</strong> ({selectedSub.studentCode})</p>
+              <p className="text-xs text-slate-400">
+                Học viên: <strong className="text-slate-700 dark:text-slate-200">{selectedSub.studentName}</strong> ({selectedSub.studentCode})
+              </p>
             </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 font-bold self-start sm:self-auto">
-              Speaking
+
+            <span className="text-xs px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-bold self-start sm:self-auto capitalize">
+              {selectedSub.type === 'audio' ? 'Kỹ Năng Speaking' : selectedSub.type === 'text' ? 'Kỹ Năng Writing' : 'Trắc Nghiệm ETS'}
             </span>
           </div>
 
-          {/* Audio Player giả lập */}
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
-            <h5 className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-              <Headphones className="w-4 h-4 text-purple-600 shrink-0" />
-              <span>Ghi âm câu trả lời của học viên:</span>
-            </h5>
-
-            <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 transition-colors shrink-0 shadow-xs"
-              >
-                {isPlayingAudio ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-              </button>
-              <div className="flex-1 space-y-1">
-                <div className="flex justify-between text-[11px] text-slate-400 font-mono">
-                  <span>{isPlayingAudio ? '00:18' : '00:00'}</span>
-                  <span>01:15</span>
-                </div>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                  <div className={`bg-emerald-500 h-1.5 rounded-full ${isPlayingAudio ? 'w-1/4 animate-pulse' : 'w-0'}`} />
-                </div>
+          {/* BẢNG THÔNG SỐ LÀM BÀI CỦA HỌC VIÊN */}
+          <div className="grid grid-cols-3 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs">
+            <div className="space-y-0.5">
+              <span className="text-slate-400 text-[11px] block">% Đã hoàn thành:</span>
+              <span className="font-black text-indigo-600 text-sm">{selectedSub.completionRate}%</span>
+              <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full overflow-hidden mt-1">
+                <div className="bg-indigo-600 h-1 rounded-full" style={{ width: `${selectedSub.completionRate}%` }} />
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-500 italic">
-              "In this picture, I can see a woman standing in front of a supermarket shelf. She is holding a basket..."
+            <div className="space-y-0.5">
+              <span className="text-slate-400 text-[11px] block">Thời gian làm bài:</span>
+              <span className="font-black text-slate-800 dark:text-slate-200 text-sm flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                <span>{selectedSub.duration}</span>
+              </span>
+              <span className="text-[10px] text-slate-400">Đúng thời lượng</span>
+            </div>
+
+            <div className="space-y-0.5">
+              <span className="text-slate-400 text-[11px] block">Số câu đúng / Điểm:</span>
+              <span className="font-black text-emerald-600 text-sm">{selectedSub.correctAnswers}</span>
+              <span className="text-[10px] text-emerald-700 font-bold block">{selectedSub.toeicScore}</span>
             </div>
           </div>
 
-          {/* Form chấm điểm */}
-          <form onSubmit={handleSaveGrade} className="space-y-3.5">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Điểm số (Thang 100):
-              </label>
-              <input
-                type="number"
-                value={gradeScore}
-                onChange={(e) => setGradeScore(e.target.value)}
-                className="w-32 px-3 py-1.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 focus:outline-emerald-500"
-              />
+          {/* HIỂN THỊ NỘI DUNG BÀI LÀM THEO LOẠI BÀI */}
+          {selectedSub.type === 'audio' && (
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
+              <h5 className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <Headphones className="w-4 h-4 text-purple-600 shrink-0" />
+                <span>Bản ghi âm giọng nói của học viên:</span>
+              </h5>
+
+              <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPlayingAudio(!isPlayingAudio)}
+                  className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition-colors shrink-0 shadow-sm"
+                >
+                  {isPlayingAudio ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                </button>
+                <div className="flex-1 space-y-1">
+                  <div className="flex justify-between text-[11px] text-slate-400 font-mono">
+                    <span>{isPlayingAudio ? '00:18' : '00:00'}</span>
+                    <span>01:15</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div className={`bg-indigo-600 h-2 rounded-full ${isPlayingAudio ? 'w-1/3 animate-pulse' : 'w-0'}`} />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Bản dịch thoại tự động (AI Speech-to-Text):
+                </span>
+                <p className="text-xs text-slate-700 dark:text-slate-300 italic bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 leading-relaxed">
+                  "{selectedSub.transcript}"
+                </p>
+              </div>
+            </div>
+          )}
+
+          {selectedSub.type === 'text' && (
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+              <h5 className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>Nội dung bài viết luận của học viên:</span>
+              </h5>
+              <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 font-mono whitespace-pre-wrap leading-relaxed">
+                {selectedSub.content}
+              </div>
+              <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                <span>Số lượng: 68 từ</span>
+                <span className="text-emerald-600 font-bold">Không phát hiện lỗi chính tả nghiêm trọng</span>
+              </div>
+            </div>
+          )}
+
+          {selectedSub.type === 'quiz' && (
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+              <h5 className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Kết quả chấm trắc nghiệm hệ thống tự động:</span>
+              </h5>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Học viên đạt <strong>{selectedSub.correctAnswers}</strong> câu đúng. Hệ thống đã tự động quy đổi tương đương <strong>{selectedSub.toeicScore}</strong>. Giảng viên có thể ghi thêm nhận xét cá nhân hóa bên dưới.
+              </p>
+            </div>
+          )}
+
+          {/* FORM NHẬP ĐIỂM & NHẬN XÉT CỦA GIẢNG VIÊN */}
+          <form onSubmit={handleSaveGrade} className="space-y-3.5 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Điểm số (Thang 100 hoặc quy đổi TOEIC):
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="VD: 88/100 hoặc 820"
+                  value={gradeScore}
+                  onChange={(e) => setGradeScore(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-indigo-600 focus:outline-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Đánh giá năng lực:
+                </label>
+                <select className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold">
+                  <option>Xuất sắc (Vượt mục tiêu lớp học)</option>
+                  <option>Đạt yêu cầu (Cần duy trì phong độ)</option>
+                  <option>Cần bổ sung kiến thức ngữ pháp/từ vựng</option>
+                  <option>Cần làm lại bài</option>
+                </select>
+              </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Lời nhận xét & Góp ý:
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Lời nhận xét & Phản hồi chi tiết cho học viên:
               </label>
               <textarea
                 rows={3}
+                required
+                placeholder="Nhập lời nhận xét, chỉ ra các lỗi sai cần khắc phục..."
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-emerald-500 leading-relaxed"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-indigo-500 leading-relaxed font-normal"
               />
             </div>
 
             {showSuccess && (
-              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 text-emerald-800 dark:text-emerald-300 text-xs font-medium flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 shrink-0" />
-                <span>Đã lưu điểm và gửi nhận xét thành công!</span>
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-2 animate-pulse">
+                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
+                <span>Đã lưu kết quả chấm điểm và gửi nhận xét thành công tới tài khoản học viên!</span>
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-sm transition-all flex items-center justify-center gap-2"
             >
               <Check className="w-4 h-4" />
-              <span>Xác nhận & Lưu điểm</span>
+              <span>Xác Nhận & Lưu Điểm Số</span>
             </button>
           </form>
         </div>
       </div>
+
+      {/* ======================================================== */}
+      {/* MODAL GIAO BÀI TẬP MỚI CHO LỚP HỌC */}
+      {/* ======================================================== */}
+      {isCreateAssignmentModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">Giao Bài Cho Lớp</span>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">Tạo Đề Thi & Bài Tập Mới</h3>
+              </div>
+              <button
+                onClick={() => setIsCreateAssignmentModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateAssignment} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tiêu đề bài tập (*):</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="VD: Speaking Part 2 - Mô tả hình ảnh công trường thi công"
+                  value={newAssignmentForm.title}
+                  onChange={(e) => setNewAssignmentForm({ ...newAssignmentForm, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Giao cho lớp học:</label>
+                  <select
+                    value={newAssignmentForm.classCode}
+                    onChange={(e) => setNewAssignmentForm({ ...newAssignmentForm, classCode: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium"
+                  >
+                    <option value="TOEIC-K28-T246">Lớp TOEIC Cấp Tốc 750+ (K28)</option>
+                    <option value="ETS-K15-T357">Lớp Luyện Đề ETS 2024 (K15)</option>
+                    <option value="LIS-PART-09">Lớp Chữa Đề Listening Part 3 & 4</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Loại kỹ năng:</label>
+                  <select
+                    value={newAssignmentForm.skillType}
+                    onChange={(e) => setNewAssignmentForm({ ...newAssignmentForm, skillType: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium"
+                  >
+                    <option value="speaking">Speaking (Học viên nộp Audio)</option>
+                    <option value="writing">Writing (Học viên nộp đoạn văn)</option>
+                    <option value="listening">Listening (Luyện nghe trắc nghiệm)</option>
+                    <option value="reading">Reading (Đọc hiểu Part 5-7)</option>
+                    <option value="full">ETS Full Actual Test</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Hạn chót nộp bài (Deadline):</label>
+                  <input
+                    type="text"
+                    value={newAssignmentForm.deadline}
+                    onChange={(e) => setNewAssignmentForm({ ...newAssignmentForm, deadline: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Thời gian làm bài tối đa:</label>
+                  <input
+                    type="text"
+                    value={newAssignmentForm.durationLimit}
+                    onChange={(e) => setNewAssignmentForm({ ...newAssignmentForm, durationLimit: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Yêu cầu & Hướng dẫn đề bài:</label>
+                <textarea
+                  rows={3}
+                  placeholder="Ghi rõ tiêu chuẩn phát âm, thời gian chuẩn bị 45 giây và thời gian nói 30 giây..."
+                  value={newAssignmentForm.description}
+                  onChange={(e) => setNewAssignmentForm({ ...newAssignmentForm, description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateAssignmentModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 font-bold"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-1.5 shadow-sm"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Phát Đề Cho Lớp</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1421,118 +2727,384 @@ function TeacherReportsView() {
   );
 }
 
-// --- 7. Hồ sơ cá nhân & Hỗ trợ Admin ---
-function TeacherProfileSupportView() {
-  const teacher = MOCK_DATA.teacher;
-  const [ticketSubject, setTicketSubject] = useState('');
-  const [ticketContent, setTicketContent] = useState('');
-  const [ticketSent, setTicketSent] = useState(false);
+// --- 7. Trang Chỉnh Sửa Hồ Sơ Tài Khoản Toàn Diện (Dùng Chung Cho Cả Giảng Viên & Học Viên) ---
+function UserProfileEditView({ role = 'teacher' }) {
+  const { user, updateUser } = useAuth();
+  const isTeacher = role === 'teacher';
+  const defaultData = isTeacher ? MOCK_DATA.teacher : MOCK_DATA.student;
 
-  const handleSendTicket = (e) => {
+  // State chỉnh sửa thông tin cá nhân
+  const [profileForm, setProfileForm] = useState({
+    name: user?.hoTen || defaultData.name,
+    email: user?.email || defaultData.email,
+    phone: isTeacher ? '0912 345 678' : '0987 654 321',
+    address: 'Quận 1, TP. Hồ Chí Minh',
+    dob: isTeacher ? '15/08/1988' : '22/10/2003',
+    // Dành cho giảng viên
+    title: defaultData.title || 'Giảng viên Chuyên gia TOEIC 985/990',
+    bio: 'Hơn 8 năm kinh nghiệm luyện thi TOEIC chuyên sâu 4 kỹ năng. Đã đào tạo hơn 3,500 học viên đạt mục tiêu 750+ và 850+.',
+    // Dành cho học viên
+    studentCode: defaultData.code || 'HV-9024',
+    targetScore: defaultData.target || 'TOEIC 850+',
+    examDate: '20/12/2026',
+    notes: 'Đặt mục tiêu chinh phục 850+ để xét tốt nghiệp đại học và ứng tuyển các tập đoàn đa quốc gia.'
+  });
+
+  // State đổi mật khẩu
+  const [pwdForm, setPwdForm] = useState({
+    currentPwd: '',
+    newPwd: '',
+    confirmPwd: ''
+  });
+  const [pwdError, setPwdError] = useState('');
+  const [pwdSuccess, setPwdSuccess] = useState(false);
+
+  // State lưu thông tin
+  const [saveProfileToast, setSaveProfileToast] = useState(false);
+
+  // Tab con trong trang Profile
+  const [activeTab, setActiveTab] = useState('info'); // 'info' | 'security' | 'support'
+
+  const handleSaveProfile = (e) => {
     e.preventDefault();
-    if (!ticketSubject || !ticketContent) return;
-    setTicketSent(true);
-    setTimeout(() => {
-      setTicketSent(false);
-      setTicketSubject('');
-      setTicketContent('');
-    }, 2500);
+    updateUser({
+      hoTen: profileForm.name.trim(),
+      email: profileForm.email.trim()
+    });
+    setSaveProfileToast(true);
+    setTimeout(() => setSaveProfileToast(false), 2500);
+  };
+
+  const handleUpdatePassword = (e) => {
+    e.preventDefault();
+    setPwdError('');
+    if (!pwdForm.currentPwd) {
+      setPwdError('Vui lòng nhập mật khẩu hiện tại.');
+      return;
+    }
+    if (pwdForm.newPwd.length < 6) {
+      setPwdError('Mật khẩu mới phải có tối thiểu 6 ký tự.');
+      return;
+    }
+    if (pwdForm.newPwd !== pwdForm.confirmPwd) {
+      setPwdError('Mật khẩu xác nhận không khớp với mật khẩu mới.');
+      return;
+    }
+
+    setPwdSuccess(true);
+    setPwdForm({ currentPwd: '', newPwd: '', confirmPwd: '' });
+    setTimeout(() => setPwdSuccess(false), 2500);
   };
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Hồ Sơ & Trung Tâm Hỗ Trợ Giảng Viên</h2>
-        <p className="text-xs text-slate-400 mt-0.5">Cập nhật thông tin giảng viên và gửi ticket hỗ trợ tới Admin</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-4">
-          <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white pb-2.5 border-b border-slate-100 dark:border-slate-800">
-            Thông tin tài khoản
-          </h3>
-          <div className="flex items-center gap-3">
-            <img src={teacher.avatar} alt="Avatar" className="w-14 h-14 rounded-full object-cover ring-2 ring-emerald-500/30 shrink-0" />
-            <div className="min-w-0">
-              <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{teacher.name}</h4>
-              <p className="text-[11px] text-slate-500">{teacher.title}</p>
-              <p className="text-[11px] text-emerald-600 font-mono mt-0.5 truncate">{teacher.email}</p>
-            </div>
-          </div>
-
-          <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
-            <h4 className="font-bold text-xs text-slate-700 dark:text-slate-300">Đổi mật khẩu</h4>
-            <input
-              type="password"
-              placeholder="Mật khẩu hiện tại"
-              className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
-            />
-            <input
-              type="password"
-              placeholder="Mật khẩu mới (tối thiểu 8 ký tự)"
-              className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
-            />
-            <button className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors">
-              Cập nhật mật khẩu
-            </button>
-          </div>
+      {/* Tiêu đề & Chọn tab */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Hồ Sơ & Tài Khoản {isTeacher ? 'Giảng Viên' : 'Học Viên'}</span>
+            <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${
+              isTeacher
+                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300'
+            }`}>
+              {isTeacher ? 'Giảng Viên' : 'Học Viên'}
+            </span>
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Quản lý thông tin cá nhân, cập nhật mục tiêu học tập, đổi mật khẩu và liên hệ ban quản trị
+          </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-3.5">
-          <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white pb-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Gửi Ticket Hỗ Trợ Tới Admin</span>
-          </h3>
+        {/* Thanh tab con */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl self-start sm:self-auto border border-slate-200 dark:border-slate-700">
+          <button
+            onClick={() => setActiveTab('info')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === 'info'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <User className="w-3.5 h-3.5" />
+            <span>Thông Tin Cá Nhân</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('security')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === 'security'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <CheckCircle className="w-3.5 h-3.5" />
+            <span>Bảo Mật & Mật Khẩu</span>
+          </button>
+        </div>
+      </div>
 
-          <form onSubmit={handleSendTicket} className="space-y-2.5">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Loại yêu cầu:</label>
-              <select className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-                <option>Hỗ trợ phòng học & thiết bị</option>
-                <option>Duyệt nội dung khóa học</option>
-                <option>Tính thù lao giảng dạy</option>
-                <option>Khác</option>
-              </select>
+      {saveProfileToast && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-2 animate-bounce">
+          <CheckCircle className="w-4 h-4 text-emerald-600" />
+          <span>Đã cập nhật thông tin hồ sơ tài khoản thành công!</span>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* TAB 1: THÔNG TIN CÁ NHÂN */}
+      {/* ======================================================== */}
+      {activeTab === 'info' && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-6">
+          {/* Avatar & Header Profile */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+            <div className="relative self-start sm:self-auto">
+              <img
+                src={defaultData.avatar}
+                alt="Avatar"
+                className="w-20 h-20 rounded-2xl object-cover ring-4 ring-slate-100 dark:ring-slate-800 shadow-md"
+              />
+              <button
+                type="button"
+                onClick={() => alert('Chức năng tải ảnh đại diện mới')}
+                className="absolute -bottom-1 -right-1 p-1.5 rounded-lg bg-indigo-600 text-white shadow-md hover:bg-indigo-700 transition-colors"
+                title="Đổi ảnh đại diện"
+              >
+                <Upload className="w-3.5 h-3.5" />
+              </button>
             </div>
 
+            <div className="space-y-1">
+              <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                <span>{profileForm.name}</span>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  {isTeacher ? 'Giảng Viên' : `Mã HV: ${profileForm.studentCode}`}
+                </span>
+              </h3>
+              <p className="text-xs text-indigo-600 font-semibold">
+                {isTeacher ? profileForm.title : `Mục tiêu điểm số: ${profileForm.targetScore}`}
+              </p>
+              <p className="text-xs text-slate-400 font-mono">{profileForm.email}</p>
+            </div>
+          </div>
+
+          {/* Form chỉnh sửa chi tiết */}
+          <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+            <h4 className="font-extrabold text-xs uppercase text-slate-400 tracking-wider">
+              Thông tin liên hệ & cá nhân
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Họ và tên (*):</label>
+                <input
+                  type="text"
+                  required
+                  value={profileForm.name}
+                  onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Địa chỉ Email (*):</label>
+                <input
+                  type="email"
+                  required
+                  value={profileForm.email}
+                  onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Số điện thoại (*):</label>
+                <input
+                  type="tel"
+                  value={profileForm.phone}
+                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Ngày sinh:</label>
+                <input
+                  type="text"
+                  value={profileForm.dob}
+                  onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Địa chỉ thường trú:</label>
+                <input
+                  type="text"
+                  value={profileForm.address}
+                  onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                />
+              </div>
+            </div>
+
+            {/* Các trường chuyên biệt */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-4">
+              <h4 className="font-extrabold text-xs uppercase text-slate-400 tracking-wider">
+                {isTeacher ? 'Hồ sơ chuyên môn giảng dạy' : 'Mục tiêu & Kế hoạch học tập'}
+              </h4>
+
+              {isTeacher ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Chức danh & Chứng chỉ TOEIC:
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.title}
+                      onChange={(e) => setProfileForm({ ...profileForm, title: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Bio tóm tắt kinh nghiệm & phương pháp đào tạo:
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={profileForm.bio}
+                      onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 leading-relaxed"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Mục tiêu điểm số TOEIC hướng đến:
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.targetScore}
+                      onChange={(e) => setProfileForm({ ...profileForm, targetScore: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-indigo-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Ngày dự kiến thi chứng chỉ IIG:
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.examDate}
+                      onChange={(e) => setProfileForm({ ...profileForm, examDate: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Ghi chú / Kế hoạch cá nhân:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={profileForm.notes}
+                      onChange={(e) => setProfileForm({ ...profileForm, notes: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-3 flex justify-end">
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-2 shadow-sm transition-all"
+              >
+                <Check className="w-4 h-4" />
+                <span>Lưu Cập Nhật Hồ Sơ</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* TAB 2: ĐỔI MẬT KHẨU & BẢO MẬT */}
+      {/* ======================================================== */}
+      {activeTab === 'security' && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs max-w-lg space-y-4">
+          <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="font-bold text-base text-slate-900 dark:text-white">Thiết Lập Mật Khẩu Mới</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Để bảo vệ an toàn tài khoản, mật khẩu cần có tối thiểu 6 ký tự</p>
+          </div>
+
+          <form onSubmit={handleUpdatePassword} className="space-y-3.5 text-xs">
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Tiêu đề:</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Mật khẩu hiện tại (*):</label>
               <input
-                type="text"
-                placeholder="VD: Nâng cấp mic phòng P.402..."
-                value={ticketSubject}
-                onChange={(e) => setTicketSubject(e.target.value)}
-                className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-emerald-500"
+                type="password"
+                required
+                placeholder="Nhập mật khẩu hiện tại của bạn"
+                value={pwdForm.currentPwd}
+                onChange={(e) => setPwdForm({ ...pwdForm, currentPwd: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Nội dung chi tiết:</label>
-              <textarea
-                rows={3}
-                placeholder="Mô tả cụ thể sự cố hoặc đề xuất..."
-                value={ticketContent}
-                onChange={(e) => setTicketContent(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-emerald-500"
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Mật khẩu mới (*):</label>
+              <input
+                type="password"
+                required
+                placeholder="Tối thiểu 6 ký tự"
+                value={pwdForm.newPwd}
+                onChange={(e) => setPwdForm({ ...pwdForm, newPwd: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
               />
             </div>
 
-            {ticketSent && (
-              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 text-emerald-800 dark:text-emerald-300 text-xs font-medium">
-                Ticket của bạn đã gửi thành công tới Admin!
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Xác nhận mật khẩu mới (*):</label>
+              <input
+                type="password"
+                required
+                placeholder="Nhập lại mật khẩu mới"
+                value={pwdForm.confirmPwd}
+                onChange={(e) => setPwdForm({ ...pwdForm, confirmPwd: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+              />
+            </div>
+
+            {pwdError && (
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-300 text-red-700 dark:text-red-300 font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{pwdError}</span>
+              </div>
+            )}
+
+            {pwdSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 text-emerald-800 dark:text-emerald-300 font-bold flex items-center gap-2 animate-pulse">
+                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
+                <span>Đổi mật khẩu thành công! Hãy ghi nhớ mật khẩu mới của bạn.</span>
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
             >
-              <Send className="w-3.5 h-3.5" />
-              <span>Gửi Ticket</span>
+              <Check className="w-4 h-4" />
+              <span>Cập Nhật Mật Khẩu Mới</span>
             </button>
           </form>
         </div>
-      </div>
+      )}
+
     </div>
   );
 }
@@ -1541,27 +3113,104 @@ function TeacherProfileSupportView() {
 // ==================== CÁC VIEW CỦA HỌC VIÊN =========================
 // ====================================================================
 
-function StudentViews({ currentTab, setTab }) {
+function StudentViews({
+  currentTab,
+  setTab,
+  homeTab,
+  setHomeTab,
+  commerceTab,
+  setCommerceTab,
+  practiceTab,
+  setPracticeTab
+}) {
   switch (currentTab) {
-    case 'mylearning':
-      return <StudentMyLearningView setTab={setTab} />;
-    case 'catalog':
-      return <StudentCourseCatalogView setTab={setTab} />;
-    case 'checkout':
-      return <StudentCheckoutView setTab={setTab} />;
-    case 'player':
-      return <StudentCoursePlayerView />;
-    case 'exam':
-      return <StudentExamQuizView />;
-    case 'schedule':
-      return <StudentScheduleView />;
+    case 'learning':
+      return <StudentLearningDashboardView activeTab={homeTab} setActiveTab={setHomeTab} setTab={setTab} />;
+    case 'commerce':
+      return <StudentCommerceView activeTab={commerceTab} setActiveTab={setCommerceTab} setTab={setTab} />;
+    case 'practice':
+      return <StudentLearningPracticeView activeTab={practiceTab} setActiveTab={setPracticeTab} />;
     case 'certificates':
       return <StudentCertificatesView />;
-    case 'history':
-      return <StudentHistorySupportView />;
+    case 'profile':
+      return <UserProfileEditView role="student" />;
     default:
-      return <StudentMyLearningView setTab={setTab} />;
+      return <StudentLearningDashboardView activeTab={homeTab} setActiveTab={setHomeTab} setTab={setTab} />;
   }
+}
+
+function StudentLearningDashboardView({ activeTab, setActiveTab, setTab }) {
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white/80 p-1.5 dark:border-slate-800 dark:bg-slate-900/80 w-fit">
+        <button
+          type="button"
+          onClick={() => setActiveTab('overview')}
+          className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors ${activeTab === 'overview' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+        >
+          Tổng quan học tập
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('schedule')}
+          className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors ${activeTab === 'schedule' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+        >
+          Lịch học & điểm danh
+        </button>
+      </div>
+      {activeTab === 'schedule' ? <StudentScheduleView /> : <StudentMyLearningView setTab={setTab} />}
+    </div>
+  );
+}
+
+function StudentCommerceView({ activeTab, setActiveTab, setTab }) {
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white/80 p-1.5 dark:border-slate-800 dark:bg-slate-900/80 w-fit">
+        <button
+          type="button"
+          onClick={() => setActiveTab('checkout')}
+          className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors ${activeTab === 'checkout' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+        >
+          Giỏ hàng & thanh toán
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('history')}
+          className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors ${activeTab === 'history' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+        >
+          Lịch sử giao dịch
+        </button>
+      </div>
+      {activeTab === 'history' ? <StudentHistorySupportView /> : <StudentCheckoutView setTab={setTab} />}
+    </div>
+  );
+}
+
+function StudentLearningPracticeView({ activeTab, setActiveTab }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-1.5 w-fit">
+        <button
+          type="button"
+          onClick={() => setActiveTab('player')}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === 'player' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+        >
+          <Video className="w-4 h-4 inline-block mr-1.5" />
+          Trình phát bài học
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('exam')}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === 'exam' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+        >
+          <Clock className="w-4 h-4 inline-block mr-1.5" />
+          Phòng thi ETS
+        </button>
+      </div>
+      {activeTab === 'exam' ? <StudentExamQuizView /> : <StudentCoursePlayerView />}
+    </div>
+  );
 }
 
 // --- 1. Góc học tập của tôi ---
@@ -1605,9 +3254,6 @@ function StudentMyLearningView({ setTab }) {
       <div>
         <div className="flex items-center justify-between mb-3 px-1">
           <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Khóa học đã đăng ký ({student.enrolledCourses.length})</h3>
-          <button onClick={() => setTab('catalog')} className="text-xs font-semibold text-indigo-600 hover:underline">
-            Xem thêm →
-          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -1677,117 +3323,6 @@ function StudentMyLearningView({ setTab }) {
             </button>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-// --- 2. Khám phá Khóa học ---
-function StudentCourseCatalogView({ setTab }) {
-  const [selectedCourse, setSelectedCourse] = useState(MOCK_DATA.student.catalogCourses[1]);
-  const [filterLevel, setFilterLevel] = useState('ALL');
-
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Khám Phá Khóa Học TOEIC & IELTS</h2>
-        <p className="text-xs text-slate-400 mt-0.5">Tìm kiếm lộ trình bứt phá điểm số phù hợp với bạn</p>
-      </div>
-
-      {/* Bộ lọc */}
-      <div className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-wrap gap-2.5 items-center">
-        <div className="flex items-center gap-1.5">
-          <Filter className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Lọc:</span>
-        </div>
-        <select
-          value={filterLevel}
-          onChange={(e) => setFilterLevel(e.target.value)}
-          className="px-2.5 py-1 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold"
-        >
-          <option value="ALL">Mọi trình độ (0 - 990)</option>
-          <option value="BASIC">Mất gốc (0 - 450+)</option>
-          <option value="ADVANCED">Nâng cao (650 - 850+)</option>
-        </select>
-        <select className="px-2.5 py-1 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold">
-          <option>Kỳ thi: TOEIC 2 Kỹ Năng</option>
-          <option>Kỳ thi: TOEIC 4 Kỹ Năng</option>
-          <option>Kỳ thi: IELTS Học Thuật</option>
-        </select>
-      </div>
-
-      {/* Grid danh sách & chi tiết */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div className="space-y-3">
-          {MOCK_DATA.student.catalogCourses.map((crs) => {
-            const isSelected = selectedCourse.id === crs.id;
-            return (
-              <div
-                key={crs.id}
-                onClick={() => setSelectedCourse(crs)}
-                className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                  isSelected
-                    ? 'border-indigo-600 bg-indigo-50/20 dark:bg-indigo-950/20 shadow-md ring-2 ring-indigo-500/20'
-                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-bold text-indigo-600">{crs.level}</span>
-                  <span className="text-amber-500 font-bold">★ {crs.rating}</span>
-                </div>
-                <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mt-1.5">{crs.title}</h4>
-                <p className="text-[11px] text-slate-400 mt-0.5">{crs.teacher}</p>
-                <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <span className="font-black text-sm text-indigo-600">{crs.price.toLocaleString('vi-VN')} đ</span>
-                  <span className="text-[10px] text-slate-400 line-through">{crs.originalPrice.toLocaleString('vi-VN')} đ</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">{selectedCourse.exam}</span>
-              <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mt-0.5">{selectedCourse.title}</h3>
-              <p className="text-xs text-slate-400 mt-1">Giảng viên: <strong className="text-slate-700 dark:text-slate-300">{selectedCourse.teacher}</strong></p>
-            </div>
-            <div className="text-left sm:text-right">
-              <p className="text-xl sm:text-2xl font-black text-indigo-600">{selectedCourse.price.toLocaleString('vi-VN')} đ</p>
-              <p className="text-xs text-slate-400 line-through">{selectedCourse.originalPrice.toLocaleString('vi-VN')} đ</p>
-            </div>
-          </div>
-
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            {selectedCourse.description}
-          </p>
-
-          <div className="space-y-2.5">
-            <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">Đề cương chi tiết:</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
-              {selectedCourse.syllabus.map((item, idx) => (
-                <div key={idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex items-center gap-2 text-xs">
-                  <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="text-[11px] text-slate-400">
-              ✓ Cam kết hỗ trợ 1-1 cùng giảng viên
-            </div>
-            <button
-              onClick={() => setTab('checkout')}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2"
-            >
-              <ShoppingCart className="w-4 h-4" />
-              <span>Đăng Ký / Mua Ngay</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -2279,74 +3814,29 @@ function StudentCertificatesView() {
 // --- 8. Lịch sử Đơn hàng & Hỗ trợ ---
 function StudentHistorySupportView() {
   const transactions = MOCK_DATA.student.transactions;
-  const [supportMsg, setSupportMsg] = useState('');
-  const [chatLog, setChatLog] = useState([
-    { sender: 'bot', text: 'Xin chào! Bộ phận hỗ trợ TOEIC Master sẵn sàng trợ giúp bạn.' },
-  ]);
-
-  const handleSend = (e) => {
-    e.preventDefault();
-    if (!supportMsg.trim()) return;
-    setChatLog([...chatLog, { sender: 'user', text: supportMsg }]);
-    setSupportMsg('');
-  };
 
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Lịch Sử Giao Dịch & Trợ Giúp</h2>
-        <p className="text-xs text-slate-400 mt-0.5">Quản lý hóa đơn đã thanh toán và gửi tin nhắn hỗ trợ</p>
+        <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Lịch Sử Giao Dịch</h2>
+        <p className="text-xs text-slate-400 mt-0.5">Xem các khóa học và hóa đơn đã thanh toán</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-2.5">
-          <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">Đơn hàng đã mua</h3>
-          {transactions.map((tx) => (
-            <div key={tx.id} className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
-              <div className="flex justify-between font-bold">
-                <span>{tx.id}</span>
-                <span className="text-emerald-600">{tx.status}</span>
-              </div>
-              <h5 className="font-semibold text-slate-800 dark:text-slate-200 truncate">{tx.course}</h5>
-              <div className="flex justify-between text-slate-400 pt-1">
-                <span>{tx.date}</span>
-                <strong className="text-indigo-600">{tx.amount.toLocaleString('vi-VN')} đ</strong>
-              </div>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-2.5 max-w-3xl">
+        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">Đơn hàng đã mua</h3>
+        {transactions.map((tx) => (
+          <div key={tx.id} className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
+            <div className="flex justify-between font-bold">
+              <span>{tx.id}</span>
+              <span className="text-emerald-600">{tx.status}</span>
             </div>
-          ))}
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-3 flex flex-col h-[360px]">
-          <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
-            <MessageSquare className="w-4 h-4 text-indigo-600" />
-            <span>Trợ giúp trực tuyến</span>
-          </h3>
-
-          <div className="flex-1 overflow-y-auto space-y-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs">
-            {chatLog.map((c, i) => (
-              <div key={i} className={`flex ${c.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-2.5 rounded-xl ${
-                  c.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
-                }`}>
-                  {c.text}
-                </div>
-              </div>
-            ))}
+            <h5 className="font-semibold text-slate-800 dark:text-slate-200 truncate">{tx.course}</h5>
+            <div className="flex justify-between text-slate-400 pt-1">
+              <span>{tx.date}</span>
+              <strong className="text-indigo-600">{tx.amount.toLocaleString('vi-VN')} đ</strong>
+            </div>
           </div>
-
-          <form onSubmit={handleSend} className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Nhập câu hỏi..."
-              value={supportMsg}
-              onChange={(e) => setSupportMsg(e.target.value)}
-              className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
-            />
-            <button type="submit" className="px-3.5 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700">
-              Gửi
-            </button>
-          </form>
-        </div>
+        ))}
       </div>
     </div>
   );

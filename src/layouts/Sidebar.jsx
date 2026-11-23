@@ -1,5 +1,4 @@
 // layouts/Sidebar.jsx
-import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, GraduationCap, Tag, BookOpen, School,

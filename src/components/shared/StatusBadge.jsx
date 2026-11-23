@@ -10,8 +10,6 @@ const statusMap = {
   inactive: { label: 'Ngừng hoạt động', color: 'gray' },
   banned: { label: 'Bị khóa', color: 'red' },
   deleted: { label: 'Đã xóa', color: 'slate' },
-  pending: { label: 'Chờ xác minh', color: 'yellow' },
-
   // Khóa học
   draft: { label: 'Bản nháp', color: 'gray' },
   pending_review: { label: 'Chờ duyệt', color: 'yellow' },
@@ -30,13 +28,11 @@ const statusMap = {
   paid: { label: 'Đã thanh toán', color: 'green' },
   success: { label: 'Thành công', color: 'green' },
   failed: { label: 'Thất bại', color: 'red' },
-  cancelled: { label: 'Đã hủy', color: 'gray' },
   partial_refunded: { label: 'Hoàn tiền 1 phần', color: 'orange' },
   refunded: { label: 'Đã hoàn tiền', color: 'purple' },
 
   // Hoàn tiền
   approved: { label: 'Đã chấp nhận', color: 'blue' },
-  rejected: { label: 'Từ chối', color: 'red' },
   processing: { label: 'Đang xử lý', color: 'blue' },
 
   // Mã giảm giá
