@@ -5,7 +5,6 @@ import { ROLES } from '../constants/roles';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // TODO: nối API - lấy thông tin user xác thực từ JWT token hoặc session thật
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('auth_user');
@@ -15,27 +14,38 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const login = (userData) => {
-    // TODO: nối API POST /api/auth/login và lưu token vào Cookie / LocalStorage
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem('auth_token') || null;
+  });
+
+  const login = (userData, authToken = null) => {
     const fullUser = {
       id: userData?.id || 'USR-001',
-      hoTen: userData?.hoTen || 'Người dùng thử',
-      email: userData?.email || 'user@example.com',
-      vaiTro: userData?.vaiTro || ROLES.ADMIN,
+      hoTen: userData?.hoTen || 'Học viên',
+      email: userData?.email || 'student@toeic.vn',
+      vaiTro: userData?.vaiTro || ROLES.STUDENT,
+      anhDaiDien: userData?.anhDaiDien || null,
+      soDienThoai: userData?.soDienThoai || '',
     };
     setUser(fullUser);
     localStorage.setItem('auth_user', JSON.stringify(fullUser));
+
+    if (authToken) {
+      setToken(authToken);
+      localStorage.setItem('auth_token', authToken);
+    }
     return fullUser;
   };
 
   const logout = () => {
-    // TODO: nối API POST /api/auth/logout và xóa token
     setUser(null);
+    setToken(null);
     localStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_token');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

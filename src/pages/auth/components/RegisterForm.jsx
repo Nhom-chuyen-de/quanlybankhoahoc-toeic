@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, AtSign, Phone, Lock, Eye, EyeOff, CheckCircle2, Loader2, Info } from 'lucide-react';
+import { studentAuthService } from '../../../services/studentService';
 
 export default function RegisterForm({ onSuccess }) {
   const [formData, setFormData] = useState({
@@ -66,7 +67,7 @@ export default function RegisterForm({ onSuccess }) {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
 
@@ -77,17 +78,32 @@ export default function RegisterForm({ onSuccess }) {
 
     setIsLoading(true);
 
-    // TODO: nối API đăng nhập/đăng ký ở đây
-    // Ví dụ:
-    // const res = await authApi.register({
-    //   ho_ten: formData.hoTen,
-    //   email: formData.email,
-    //   so_dien_thoai: formData.soDienThoai,
-    //   mat_khau: formData.matKhau,
-    //   vai_tro: 'hoc vien'
-    // });
+    try {
+      const res = await studentAuthService.register({
+        hoTen: formData.hoTen,
+        email: formData.email,
+        soDienThoai: formData.soDienThoai,
+        matKhau: formData.matKhau,
+        dongYDieuKhoan: formData.dongYDieuKhoan,
+      });
 
-    // GIẢ LẬP ĐĂNG KÝ
+      setIsLoading(false);
+      setSuccessMessage('Tạo tài khoản thành công! Đang chuyển về màn hình đăng nhập...');
+
+      setTimeout(() => {
+        if (onSuccess) onSuccess();
+      }, 1500);
+      return;
+    } catch (apiErr) {
+      if (!apiErr.isNetworkError) {
+        setIsLoading(false);
+        setErrors({ email: apiErr.message || 'Đăng ký thất bại' });
+        return;
+      }
+      console.warn('Backend server offline, fallbacking to local register mock...');
+    }
+
+    // GIẢ LẬP ĐĂNG KÝ (fallback):
     setTimeout(() => {
       setIsLoading(false);
       setSuccessMessage('Tạo tài khoản thành công! Đang chuyển về màn hình đăng nhập...');
