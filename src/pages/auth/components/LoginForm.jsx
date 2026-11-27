@@ -1,10 +1,11 @@
 // src/pages/auth/components/LoginForm.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, Ban } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { ROLES, ROLE_HOME } from '../../../constants/roles';
 import { useToast } from '../../../hooks/useToast';
+import { studentAuthService } from '../../../services/studentService';
 
 export default function LoginForm({ onForgotPassword }) {
   const navigate = useNavigate();
@@ -20,11 +21,68 @@ export default function LoginForm({ onForgotPassword }) {
   // Lỗi form validation
   const [errors, setErrors] = useState({});
 
-  // Banner lỗi mẫu để nối API sau này
+  // Banner lỗi mẫu để nối API
   const [mockErrorBanner, setMockErrorBanner] = useState(null); // 'wrong_credentials' | 'account_locked' | null
 
+  // Lắng nghe sự kiện đăng nhập Google thành công từ Tab mới (/auth/google)
+  useEffect(() => {
+    let bc = null;
+    try {
+      bc = new BroadcastChannel('toeic_google_oauth');
+      bc.onmessage = (event) => {
+          if (event.data?.type === 'GOOGLE_AUTH_SUCCESS' && event.data?.user) {
+          login(event.data.user, event.data.token);
+          toast.success(`Đăng nhập thành công!`);
+          navigate(ROLE_HOME[event.data.user.vaiTro] || '/hoc-vien', { replace: true });
+        }
+      };
+    } catch {
+      // Fallback sang storage listener
+    }
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'auth_user' && e.newValue) {
+        try {
+          const syncedUser = JSON.parse(e.newValue);
+          if (syncedUser?.vaiTro) {
+            login(syncedUser, localStorage.getItem('auth_token'));
+            navigate(ROLE_HOME[syncedUser.vaiTro] || '/hoc-vien', { replace: true });
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [login, navigate, toast]);
+
+  // Mở trực tiếp trang Đăng nhập Google thực tế (https://accounts.google.com/o/oauth2/v2/auth) ở Tab mới
   const handleGoogleLogin = () => {
-    toast.info('Chức năng đăng nhập Google sẽ cập nhật sau');
+    const googleClientId =
+      import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+      '1090097218269-pbtsgcrjfi2j7occtqonga8lk5btio20.apps.googleusercontent.com';
+    const redirectUri =
+      import.meta.env.VITE_GOOGLE_REDIRECT_URI ||
+      `${window.location.origin}/auth/google/callback`;
+    const scope = 'openid email profile';
+
+    const authUrl =
+      `https://accounts.google.com/o/oauth2/v2/auth` +
+      `?client_id=${encodeURIComponent(googleClientId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=token` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&prompt=select_account`;
+
+    const newTab = window.open(authUrl, '_blank');
+    if (!newTab) {
+      window.location.href = authUrl;
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -50,16 +108,30 @@ export default function LoginForm({ onForgotPassword }) {
     setErrors({});
     setIsLoading(true);
 
-    // TODO: nối API đăng nhập ở đây
-    // Vai trò thực tế sẽ do server trả về sau khi xác thực thông tin tài khoản.
-    // Ví dụ:
-    // const res = await authApi.login({ email, password, rememberMe });
-    // if (res.status === 'locked') setMockErrorBanner('account_locked');
-    // else if (res.error) setMockErrorBanner('wrong_credentials');
-    // else login(res.user);
+    try {
+      const res = await studentAuthService.login({ email, password });
+      setIsLoading(false);
 
-    // GIẢ LẬP ĐĂNG NHẬP SAU 1 GIÂY:
-    // Tự động nhận diện vai trò dựa trên email (hoặc mặc định Quản trị viên để quản lý hệ thống)
+      if (res.success && res.data) {
+        const loggedUser = login(res.data.user, res.data.token);
+        toast.success(`Đăng nhập thành công! Chào mừng ${loggedUser.hoTen}`);
+        const targetPath = ROLE_HOME[loggedUser.vaiTro] || '/hoc-vien';
+        navigate(targetPath);
+        return;
+      }
+    } catch (apiErr) {
+      if (!apiErr.isNetworkError) {
+        setIsLoading(false);
+        if (apiErr.message?.includes('khóa')) {
+          setMockErrorBanner('account_locked');
+        } else {
+          setMockErrorBanner('wrong_credentials');
+        }
+        return;
+      }
+    }
+
+    // FALLBACK GIẢ LẬP ĐĂNG NHẬP (khi backend chưa chạy):
     setTimeout(() => {
       setIsLoading(false);
 
@@ -84,10 +156,10 @@ export default function LoginForm({ onForgotPassword }) {
 
       login(fakeUser);
       toast.success(`Đăng nhập thành công!`);
-      
+
       const targetPath = ROLE_HOME[fakeUser.vaiTro] || '/admin';
       navigate(targetPath);
-    }, 1000);
+    }, 800);
   };
 
   return (
@@ -96,7 +168,7 @@ export default function LoginForm({ onForgotPassword }) {
       <button
         type="button"
         onClick={handleGoogleLogin}
-        className="w-full h-11 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-600/30"
+        className="w-full h-11 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-600/30 cursor-pointer"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
@@ -129,7 +201,7 @@ export default function LoginForm({ onForgotPassword }) {
         </span>
       </div>
 
-      {/* Banner lỗi mẫu (chuẩn bị sẵn để nối backend theo trang_thai) */}
+      {/* Banner lỗi mẫu */}
       {mockErrorBanner === 'wrong_credentials' && (
         <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />

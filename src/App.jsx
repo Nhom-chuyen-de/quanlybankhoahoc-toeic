@@ -20,6 +20,7 @@ function PageLoader() {
 // Layouts & Authentication (Tối ưu hóa Code Splitting với React.lazy)
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const GoogleCallbackPage = lazy(() => import('./pages/auth/GoogleCallbackPage'));
 const StudentHomePage = lazy(() => import('./pages/student/StudentHomePage'));
 const StudentSupportPage = lazy(() => import('./pages/student/StudentSupportPage'));
 const TeacherDashboardPage = lazy(() => import('./pages/teacher/TeacherDashboardPage'));
@@ -62,6 +63,9 @@ export default function App() {
           <Routes>
             {/* Trang xác thực dùng chung tại /login (NGOÀI mọi layout) */}
             <Route path="/login" element={<LoginPage />} />
+
+            {/* Route nhận OAuth 2.0 Callback thực tế từ https://accounts.google.com */}
+            <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
 
             {/* Chuyển hướng route /admin/login cũ sang /login */}
             <Route path="/admin/login" element={<Navigate to="/login" replace />} />

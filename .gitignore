@@ -7,10 +7,35 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies & Build outputs
 node_modules
+backend/node_modules
 dist
 dist-ssr
 *.local
+
+# Environment variables (chứa chuỗi kết nối CSDL & khóa bí mật)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Database files, SQL dumps & ORM database schema (Không đưa cơ sở dữ liệu lên Git)
+backend/db/
+backend/prisma/
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.mdf
+*.ldf
+*.bak
+
+# Local batch scripts
+run-all.bat
+run-backend.bat
 
 # Editor directories and files
 .vscode/*

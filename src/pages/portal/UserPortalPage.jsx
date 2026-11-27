@@ -449,7 +449,7 @@ export default function UserPortalPage({ defaultRole = 'teacher' }) {
               title="Xem và chỉnh sửa hồ sơ tài khoản"
             >
               <img
-                src={role === 'teacher' ? MOCK_DATA.teacher.avatar : MOCK_DATA.student.avatar}
+                src={user?.anhDaiDien || (role === 'teacher' ? MOCK_DATA.teacher.avatar : MOCK_DATA.student.avatar)}
                 alt="Avatar"
                 className="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-500/20"
               />
@@ -621,6 +621,7 @@ function TeacherViews({ currentTab, setTab }) {
 
 // --- 1. Teacher Dashboard View ---
 function TeacherDashboardView({ setTab }) {
+  const { user } = useAuth();
   const teacher = MOCK_DATA.teacher;
 
   return (
@@ -632,7 +633,7 @@ function TeacherDashboardView({ setTab }) {
             Bảng Điều Khiển Giảng Viên
           </span>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-black mt-2 tracking-tight">
-            Xin chào, {teacher.name}!
+            Xin chào, {user?.hoTen || teacher.name}!
           </h2>
           <p className="text-emerald-50 text-xs sm:text-sm mt-1 leading-relaxed">
             Hôm nay bạn có 2 buổi dạy và 6 bài thi kỹ năng Speaking/Writing chờ chấm điểm.
@@ -2859,7 +2860,7 @@ function UserProfileEditView({ role = 'teacher' }) {
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
             <div className="relative self-start sm:self-auto">
               <img
-                src={defaultData.avatar}
+                src={user?.anhDaiDien || defaultData.avatar}
                 alt="Avatar"
                 className="w-20 h-20 rounded-2xl object-cover ring-4 ring-slate-100 dark:ring-slate-800 shadow-md"
               />
@@ -3215,6 +3216,7 @@ function StudentLearningPracticeView({ activeTab, setActiveTab }) {
 
 // --- 1. Góc học tập của tôi ---
 function StudentMyLearningView({ setTab }) {
+  const { user } = useAuth();
   const student = MOCK_DATA.student;
 
   return (
@@ -3226,7 +3228,7 @@ function StudentMyLearningView({ setTab }) {
             Không Gian Học Tập Cá Nhân
           </span>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-black mt-2 tracking-tight">
-            Chào mừng trở lại, {student.name}!
+            Chào mừng trở lại, {user?.hoTen || student.name}!
           </h2>
           <p className="text-indigo-100 text-xs sm:text-sm mt-1 leading-relaxed">
             Mục tiêu: <strong>{student.target}</strong>. Bạn đã hoàn thành 75% lộ trình khóa học chính.
