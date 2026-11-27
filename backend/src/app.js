@@ -11,6 +11,7 @@ import learningRoutes from './modules/learning/learning.routes.js';
 import examRoutes from './modules/exams/exam.routes.js';
 import orderRoutes from './modules/orders/order.routes.js';
 import supportRoutes from './modules/support/support.routes.js';
+import teacherRoutes from './modules/teacher/teacher.routes.js';
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/v1/learning', learningRoutes);
 app.use('/api/v1/exams', examRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/support', supportRoutes);
+app.use('/api/v1/teacher', teacherRoutes);
 
 // Fallback 404 handler
 app.use((req, res) => {
